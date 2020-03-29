@@ -1,0 +1,1 @@
+100 (inVisibilityOfTarget(platform) ^ HOSTS(platform, sensor) ^ MEASURES(sensor, obsprop) ^ OBSERVEDPROPERTY(obs, obsprop) ^ REQUIRES(mission, obs)) => canParticipate(platform, mission)
