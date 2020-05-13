@@ -1,5 +1,6 @@
 from mission_creation.create_logic import create_logic
-from mission_creation.kg_additions import add_mission
+from mission_creation.kg_additions import add_volcano_mission
+from orekit_interface.access_intervals import obtain_access_times
 
 
 def write_mln_evidence(evidence, output_path):
@@ -38,8 +39,24 @@ def write_mln_program(predicates, formulas_path, output_path):
 
 
 def main():
-    # Generate mission and make a file of it in logic format
-    add_mission()
+    # This is the main process from mission to list of participating satellites
+
+    # 1. Input a mission into the Knowledge Graph
+    add_volcano_mission()
+
+    # 2. Run Orekit simulation to obtain access times for all satellites that can participate (as in have the right
+    # sensors) in the mission.
+    access_intervals = obtain_access_times(1)
+
+    # 3. Use the information from KG + simulation (+ other?) to generate outputs for Knowledge Reasoning (logic),
+    # Sensing Framework (?), Verification (logic)
+
+    # 4. Run all the other systems (which will be stored in Python packages?)
+
+    # 5. Run an Orekit simulation with the result to obtain metrics and final access times, save results in CZML
+
+    # 6. Spin up an HTTP server, display Cesium results of the final simulation with FOVs and the ground station/s
+
     evidence, predicates = create_logic()
     write_mln_evidence(evidence, 'output')
     write_mln_program(predicates, 'formulas.mln', 'output')

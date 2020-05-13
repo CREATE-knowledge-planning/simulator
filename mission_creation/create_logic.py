@@ -47,7 +47,7 @@ def create_logic():
         # Generate evidence and predicates for sensors and observable properties
         results = session.run('MATCH (p:Platform)-[:HOSTS]-(s:Sensor)-[r:OBSERVES]-(op:ObservableProperty) '
                               'WHERE p.status = "Currently being flown" '
-                              'RETURN r')
+                              'RETURN DISTINCT r')
         save_evidence(session, results, evidence, predicates, predicate_types)
 
         # Generate evidence and predicates for mission and observations
@@ -59,7 +59,7 @@ def create_logic():
         # Generate evidence and predicates for observations and its observable properties
         results = session.run('MATCH (m:Mission)-[:REQUIRES]-(ob:Observation)-[r:OBSERVEDPROPERTY]-(op:ObservableProperty) '
                               'WHERE m.mid = 1 '
-                              'RETURN r')
+                              'RETURN DISTINCT r')
         save_evidence(session, results, evidence, predicates, predicate_types)
 
         # Generate evidence and predicates for platforms being in visibility of the target
