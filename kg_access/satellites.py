@@ -63,14 +63,26 @@ def retrieve_valid_instruments(platform_name, session):
             }
             # TODO: Replace for real FOV values
             if sensor_geometry == "rectangular":
-                sensor["across_fov"] = 15 # degrees
-                sensor["along_fov"] = 15 # degrees
+                sensor["across_fov"] = 15  # degrees
+                sensor["along_fov"] = 15  # degrees
             elif sensor_geometry == "conical":
-                sensor["conical_fov"] = 15 # degrees
+                sensor["conical_fov"] = 15  # degrees
+
+            # TODO: Add sensing framework information:
+            # - A (STM): approximate as an autoregressive model based on real data
+            # (although for now just make a based guess)
+            # - B: 0 for most sensors (all?)
+            # - Q: part of the autoregressive model (white noise)
+
 
             # Add accuracies information
             accuracies = retrieve_instrument_accuracies(sensor_name, session)
             sensor["accuracies"] = accuracies
+
+            # TODO: Add sensing framework information:
+            # - H: Linearized equation to get L2 measurement from L1 measurement (get from KG -> needs adding to KG)
+            # - R: k1 + k2*cos(off_nadir)/h (take into account effects of atmosphere between sensor and measurement)
+
             sensors.append(sensor)
     return sensors
 

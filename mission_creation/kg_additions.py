@@ -39,13 +39,13 @@ def add_volcano_mission():
                               start_date=now_time,
                               end_date=month_time,
                               name1='M1 - Volcano Temperature (TIR)',
-                              acc1='1K',
+                              acc1='1 K',
                               name2='M1 - Volcano Temperature (SWIR)',
-                              acc2='1K',
+                              acc2='1 K',
                               name3='M1 - Volcano Plume',
-                              acc3='10% confidence',
+                              acc3='10 % confidence',
                               name4='M1 - Volcano Land Displacements',
-                              acc4='10cm',
+                              acc4='10 cm',
                               name5='M1 - Volcano Gases',
                               acc5='0.1'
                               ).summary()

@@ -1,11 +1,14 @@
+import datetime
 import json
 import os
 import subprocess
+from json import JSONEncoder
 
 import requests
 from neo4j import GraphDatabase
+from neotime import DateTime
 
-from kg_access.locations import get_target_locations
+from kg_access.mission import get_mission_information
 from kg_access.satellites import retrieve_available_satellites
 
 
@@ -26,7 +29,16 @@ def add_tle_information(satellites):
         satellite["line2"] = tles[satellite["norad_id"]]["line2"]
 
 
-def print_orekit_info(satellites, locations):
+class DateTimeEncoder(JSONEncoder):
+    # Override the default method
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
+        if isinstance(obj, DateTime):
+            return obj.iso_format()
+
+
+def print_orekit_info(satellites, mission):
     # 1. Create directory with all intermediate files
     cwd = os.getcwd()
     int_path = os.path.join(cwd, "int_files")
@@ -40,12 +52,12 @@ def print_orekit_info(satellites, locations):
     # all involved locations from mission
 
     satellites_path = os.path.join(int_path, "satellites.json")
-    locations_path = os.path.join(int_path, "locations.json")
+    mission_path = os.path.join(int_path, "mission.json")
 
     with open(satellites_path, "w") as satellites_file:
-        json.dump(satellites, satellites_file)
-    with open(locations_path, "w") as locations_file:
-        json.dump(locations, locations_file)
+        json.dump(satellites, satellites_file, cls=DateTimeEncoder)
+    with open(mission_path, "w") as mission_file:
+        json.dump(mission, mission_file, cls=DateTimeEncoder)
 
 
 def obtain_access_times(mission_id):
@@ -58,10 +70,10 @@ def obtain_access_times(mission_id):
         satellites = retrieve_available_satellites(mission_id, session)
         # 2. Download the TLEs for the satellites
         add_tle_information(satellites)
-        # 3. Get target locations
-        locations = get_target_locations(mission_id, session)
+        # 3. Get mission information
+        mission = get_mission_information(mission_id, session)
         # 4. Save all required information on a file for Orekit:
-        print_orekit_info(satellites, locations)
+        print_orekit_info(satellites, mission)
 
     driver.close()
     # 5. Call Orekit and wait for the results before continuing
