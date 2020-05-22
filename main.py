@@ -1,3 +1,4 @@
+from knowledge_reasoning.print_files import print_kg_reasoning_files
 from mission_creation.create_logic import create_logic
 from mission_creation.kg_additions import add_volcano_mission
 from orekit_interface.access_intervals import obtain_access_times
@@ -50,6 +51,8 @@ def main():
 
     # 3. Use the information from KG + simulation (+ other?) to generate outputs for Knowledge Reasoning (logic),
     # Sensing Framework (?), Verification (logic)
+    #  Call the Knowledge Reasoning
+    print_kg_reasoning_files(1, access_intervals)
 
     # 4. Run all the other systems (which will be stored in Python packages?)
 

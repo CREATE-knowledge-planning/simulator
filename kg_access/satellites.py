@@ -106,3 +106,35 @@ def retrieve_available_satellites(mission_id, session):
                 satellite_info["sensors"] = sensors
                 satellites.append(satellite_info)
     return satellites
+
+
+def get_all_active_satellites_with_instruments(session):
+    result = session.run('MATCH (p:Platform)-[r:HOSTS]-(s:Sensor) '
+                         'WHERE p.status="Currently being flown" RETURN DISTINCT p, r, s;')
+    satellites = []
+    for record in result:
+        platform_name = record["p"]["name"]
+        satellite_info = {
+            "name": platform_name,
+            "sensors": []
+        }
+        sensors = retrieve_valid_instruments(platform_name, session)
+        satellite_info["sensors"] = sensors
+        satellites.append(satellite_info)
+    return satellites
+
+
+def get_measures_relationships(session):
+    result = session.run(
+        'MATCH (p:Platform)--(s:Sensor)-[ro:OBSERVES]-(op:ObservableProperty) '
+        'WHERE p.status="Currently being flown" RETURN DISTINCT s, ro, op;')
+    relations = []
+    for record in result:
+        sensor_name = record["s"]["name"]
+        op_name = record["op"]["name"]
+        relations.append({
+            "head": sensor_name,
+            "relationship": "OBSERVES",
+            "tail": op_name
+        })
+    return relations

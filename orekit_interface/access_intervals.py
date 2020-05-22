@@ -27,6 +27,7 @@ def add_tle_information(satellites):
     for satellite in satellites:
         satellite["line1"] = tles[satellite["norad_id"]]["line1"]
         satellite["line2"] = tles[satellite["norad_id"]]["line2"]
+    return satellites
 
 
 class DateTimeEncoder(JSONEncoder):
@@ -69,7 +70,7 @@ def obtain_access_times(mission_id):
         # 1. Obtain a list of satellites that can participate in the mission from the Knowledge Graph
         satellites = retrieve_available_satellites(mission_id, session)
         # 2. Download the TLEs for the satellites
-        add_tle_information(satellites)
+        satellites = add_tle_information(satellites)
         # 3. Get mission information
         mission = get_mission_information(mission_id, session)
         # 4. Save all required information on a file for Orekit:
@@ -77,9 +78,13 @@ def obtain_access_times(mission_id):
 
     driver.close()
     # 5. Call Orekit and wait for the results before continuing
-    orekit_process = subprocess.run(["java", "-version"], cwd=os.getcwd())
+    jar_path = os.path.join(os.getcwd(), "jar_files", "propagator.jar")
+    orekit_process = subprocess.run(["java", "-jar", jar_path], cwd=os.getcwd())
 
     # 5. Read Orekit results from file and put them into the right format for this code
+    accesses_path = os.path.join(os.getcwd(), "int_files", "accesses.json")
+    with open(accesses_path, "r") as accesses_file:
+        accesses = json.load(accesses_file)
 
-    # Return a map<Measurement, map<Location, Intervals>>
-    pass
+    # Return a map<Satellite, map<Instrument, map<Location, Intervals>>
+    return accesses
