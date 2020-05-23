@@ -32,6 +32,37 @@ def get_required_observations(mission_id, session):
     return observations
 
 
+def get_observedproperty_relations(session):
+    result = session.run('MATCH (o:Observation)--(op:ObservableProperty) '
+                         'RETURN DISTINCT o, op;')
+    relations = []
+    for record in result:
+        ob_name = record["o"]["name"]
+        op_name = record["op"]["name"]
+        relations.append({
+            "head": ob_name,
+            "relationship": "OBSERVEDPROPERTY",
+            "tail": op_name
+        })
+    return relations
+
+
+def get_requires_relations(mission_id, session):
+    result = session.run('MATCH (m:Mission)--(o:Observation) '
+                         'WHERE m.mid={mission_id} RETURN DISTINCT m, o;',
+                         mission_id=mission_id)
+    relations = []
+    for record in result:
+        mission_name = record["m"]["name"]
+        observation_name = record["o"]["name"]
+        relations.append({
+            "head": mission_name,
+            "relationship": "REQUIRES",
+            "tail": observation_name
+        })
+    return relations
+
+
 def get_mission_information(mission_id, session: Session):
     result = session.run('MATCH (m:Mission) '
                          'WHERE m.mid={mission_id} RETURN DISTINCT m;',

@@ -138,3 +138,83 @@ def get_measures_relationships(session):
             "tail": op_name
         })
     return relations
+
+
+def get_sensortype_relations(session):
+    result = session.run(
+        'MATCH (p:Platform)--(s:Sensor) '
+        'WHERE p.status="Currently being flown" RETURN DISTINCT s;')
+    relations = []
+    for record in result:
+        sensor_name = record["s"]["name"]
+        sensor_types = record["s"]["types"]
+        sensor_technology = record["s"]["technology"]
+        if sensor_technology is not None:
+            relations.append({
+                "head": sensor_name,
+                "relationship": "SENSORTYPE",
+                "tail": sensor_technology
+            })
+        for sensor_type in sensor_types:
+            relations.append({
+                "head": sensor_name,
+                "relationship": "SENSORTYPE",
+                "tail": sensor_type
+            })
+    return relations
+
+
+def get_sensorband_relations(session):
+    result = session.run(
+        'MATCH (p:Platform)--(s:Sensor) '
+        'WHERE p.status="Currently being flown" RETURN DISTINCT s;')
+    relations = []
+    for record in result:
+        sensor_name = record["s"]["name"]
+        sensor_bands = record["s"]["wavebands"]
+        for sensor_band in sensor_bands:
+            relations.append({
+                "head": sensor_name,
+                "relationship": "SENSORBAND",
+                "tail": sensor_band
+            })
+    return relations
+
+
+def get_sensorrule_relations(session):
+    result = session.run(
+        'MATCH (p:Platform)--(s:Sensor) '
+        'WHERE p.status="Currently being flown" RETURN DISTINCT s;')
+    relations = []
+    for record in result:
+        sensor_name = record["s"]["name"]
+        sensor_types = record["s"]["types"]
+        sensor_technology = record["s"]["technology"]
+        sensor_mergedtypes = list(sensor_types)
+        if sensor_technology is not None:
+            sensor_mergedtypes.append(sensor_technology)
+        sensor_bands = record["s"]["wavebands"]
+        for sensor_type in sensor_mergedtypes:
+            for sensor_band in sensor_bands:
+                relations.append({
+                    "head": sensor_name,
+                    "relationship": "SENSORRULE",
+                    "tail": sensor_band + " " + sensor_type
+                })
+    return relations
+
+
+def get_typeobserves_relations(session):
+    result = session.run(
+        'MATCH (st:SensorType)--(o:ObservableProperty) '
+        'RETURN DISTINCT st, o;')
+    relations = []
+    for record in result:
+        sensor_rule = record["st"]["name"]
+        obsprop_name = record["o"]["name"]
+        relations.append({
+            "head": sensor_rule,
+            "relationship": "TYPEOBSERVES",
+            "tail": obsprop_name
+        })
+    return relations
