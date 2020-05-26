@@ -1,3 +1,4 @@
+from knowledge_reasoning.module_calls import train_uniker, eval_uniker
 from knowledge_reasoning.print_files import print_kg_reasoning_files
 from mission_creation.create_logic import create_logic
 from mission_creation.kg_additions import add_volcano_mission
@@ -49,20 +50,23 @@ def main():
     # sensors) in the mission.
     access_intervals = obtain_access_times(1)
 
-    # 3. Use the information from KG + simulation (+ other?) to generate outputs for Knowledge Reasoning (logic),
+    # 3. Use the information from KG + simulation to generate outputs for Knowledge Reasoning (logic),
     # Sensing Framework (?), Verification (logic)
-    #  Call the Knowledge Reasoning
+
+    # 4. Call the Knowledge Reasoning
     print_kg_reasoning_files(1, access_intervals)
+    # Train the model
+    train_uniker()
+    # Perform inference
+    eval_uniker()
 
-    # 4. Run all the other systems (which will be stored in Python packages?)
+    # 5. Call the Sensing Framework
 
-    # 5. Run an Orekit simulation with the result to obtain metrics and final access times, save results in CZML
+    # 6. Call the Verification module
 
-    # 6. Spin up an HTTP server, display Cesium results of the final simulation with FOVs and the ground station/s
+    # 7. Run an Orekit simulation with the result to obtain metrics and final access times, save results in CZML
 
-    evidence, predicates = create_logic()
-    write_mln_evidence(evidence, 'output')
-    write_mln_program(predicates, 'formulas.mln', 'output')
+    # 8. Spin up an HTTP server, display Cesium results of the final simulation with FOVs and the ground station/s
 
 
 if __name__ == "__main__":

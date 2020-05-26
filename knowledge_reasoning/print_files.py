@@ -4,9 +4,9 @@ import shutil
 from neo4j import GraphDatabase
 
 from kg_access.mission import get_observedproperty_relations, get_requires_relations, get_mission_information
-from kg_access.satellites import get_all_active_satellites_with_instruments, get_measures_relationships, \
+from kg_access.satellites import get_all_active_satellites_with_instruments, \
     get_sensortype_relations, get_sensorband_relations, get_typeobserves_relations, get_sensorrule_relations, \
-    retrieve_available_satellites
+    retrieve_available_satellites, get_observes_relationships
 
 
 def print_kg_reasoning_files(mission_id, access_intervals):
@@ -48,8 +48,8 @@ def print_kg_reasoning_files(mission_id, access_intervals):
                 })
 
         # MEASURES
-        relations.add("MEASURES")
-        measures_relations = get_measures_relationships(session)
+        relations.add("OBSERVES")
+        measures_relations = get_observes_relationships(session)
         for relation in measures_relations:
             entities.add(relation["head"])
             entities.add(relation["tail"])
@@ -72,6 +72,7 @@ def print_kg_reasoning_files(mission_id, access_intervals):
         kg.extend(requires_relations)
 
         # inVisibilityOfTarget
+        relations.add("inVisibilityOfTarget")
         for sat_name, sat_info in access_intervals["output"].items():
             for instr_name, instr_info in sat_info.items():
                 for target_name, accesses in instr_info.items():
@@ -145,7 +146,7 @@ def print_kg_reasoning_files(mission_id, access_intervals):
     kg_path = os.path.join(int_path, "train.txt")
     with open(kg_path, 'w', encoding='utf8') as kg_file:
         for fact in kg:
-            kg_file.write(str(inv_entity_dict[fact["head"]]) + "\t" + fact["relationship"] + "\t" + str(inv_entity_dict[fact["tail"]]) + "\n")
+            kg_file.write(fact["head"] + "\t" + fact["relationship"] + "\t" + fact["tail"] + "\n")
 
     # Print a file with the logic rules
     src_rules_path = os.path.join(cwd, "knowledge_reasoning", "MLN_rule.txt")
@@ -156,4 +157,4 @@ def print_kg_reasoning_files(mission_id, access_intervals):
     ground_truth_path = os.path.join(int_path, "test.txt")
     with open(ground_truth_path, 'w', encoding='utf8') as ground_truth_file:
         for satellite in ground_truth:
-            ground_truth_file.write(str(inv_entity_dict[satellite["name"]]) + "\t" + "canParticipate" + "\t" + str(inv_entity_dict[mission_info["name"]]) + "\n")
+            ground_truth_file.write(satellite["name"] + "\t" + "canParticipate" + "\t" + mission_info["name"] + "\n")

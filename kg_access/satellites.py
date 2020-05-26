@@ -124,7 +124,7 @@ def get_all_active_satellites_with_instruments(session):
     return satellites
 
 
-def get_measures_relationships(session):
+def get_observes_relationships(session):
     result = session.run(
         'MATCH (p:Platform)--(s:Sensor)-[ro:OBSERVES]-(op:ObservableProperty) '
         'WHERE p.status="Currently being flown" RETURN DISTINCT s, ro, op;')
