@@ -1,8 +1,9 @@
 from knowledge_reasoning.module_calls import train_uniker, eval_uniker
 from knowledge_reasoning.print_files import print_kg_reasoning_files
-from mission_creation.create_logic import create_logic
 from mission_creation.kg_additions import add_volcano_mission
 from orekit_interface.access_intervals import obtain_access_times
+from sensing_interface.data_feed import generate_fake_data
+from sensing_interface.module_calls import call_sensing_framework
 
 
 def write_mln_evidence(evidence, output_path):
@@ -56,11 +57,13 @@ def main():
     # 4. Call the Knowledge Reasoning
     print_kg_reasoning_files(1, access_intervals)
     # Train the model
-    train_uniker()
+    #train_uniker()
     # Perform inference
     eval_uniker()
 
     # 5. Call the Sensing Framework
+    generate_fake_data(1, access_intervals)
+    call_sensing_framework()
 
     # 6. Call the Verification module
 

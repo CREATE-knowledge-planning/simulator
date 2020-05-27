@@ -23,6 +23,67 @@ def retrieve_instrument_accuracies(sensor_name, session):
     return accuracies
 
 
+def retrieve_instrument_characteristics(sensor_name, session):
+    # Query the KG for sensors in satellite
+    result = session.run(
+        'MATCH (s:Sensor)-[ro:OBSERVES]-(op:ObservableProperty) '
+        'WHERE s.name={name} RETURN DISTINCT ro, op;',
+        name=sensor_name)
+
+    # TODO: Fill these from real data for each sensor
+    characteristics = {}
+    for observes_record in result:
+        observable = observes_record["op"]["name"]
+
+        if observable == "Land surface temperature":
+            obs_characteristics = {
+                "A": 1.,
+                "B": 0.,
+                "Q": 0.1,
+                "R": 1.,
+                "H": {"c1": 233., "c2": 6.67}
+            }
+
+        elif observable == "Fire temperature":
+            obs_characteristics = {
+                "A": 1.,
+                "B": 0.,
+                "Q": 0.1,
+                "R": 1.,
+                "H": {"c1": 300., "c2": 40.}
+            }
+            characteristics[observable] = obs_characteristics
+        elif observable == "Cloud type":
+            obs_characteristics = {
+                "A": 1.,
+                "B": 0.,
+                "Q": 0.05,
+                "R": 0.01,
+                "H": {"c1": 0., "c2": 1.}
+            }
+            characteristics[observable] = obs_characteristics
+        elif observable == "Land surface topography":
+            obs_characteristics = {
+                "A": 1.,
+                "B": 0.,
+                "Q": 0.1,
+                "R": 0.1,
+                "H": {"c1": 0., "c2": 1.}
+            }
+            characteristics[observable] = obs_characteristics
+        elif observable == "Atmospheric Chemistry - SO2 (column/profile)":
+            obs_characteristics = {
+                "A": 1.,
+                "B": 0.,
+                "Q": 0.1,
+                "R": 1.,
+                "H": {"c1": 0., "c2": 1.}
+            }
+            characteristics[observable] = obs_characteristics
+
+    return characteristics
+
+
 def retrieve_valid_instruments(platform_name, session):
     """Retrieve information of the sensors in a platform"""
     instrument_conical_geometries = ['Conical scanning']
@@ -82,6 +143,7 @@ def retrieve_valid_instruments(platform_name, session):
             # TODO: Add sensing framework information:
             # - H: Linearized equation to get L2 measurement from L1 measurement (get from KG -> needs adding to KG)
             # - R: k1 + k2*cos(off_nadir)/h (take into account effects of atmosphere between sensor and measurement)
+            sensor["characteristics"] = retrieve_instrument_characteristics(sensor_name, session)
 
             sensors.append(sensor)
     return sensors
