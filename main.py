@@ -1,7 +1,9 @@
+from http_server.server_functions import open_local_http_server
 from knowledge_reasoning.module_calls import train_uniker, eval_uniker
 from knowledge_reasoning.print_files import print_kg_reasoning_files
 from mission_creation.kg_additions import add_volcano_mission
 from orekit_interface.access_intervals import obtain_access_times
+from orekit_interface.czml_interface import generate_czml_data
 from sensing_interface.data_feed import generate_fake_data
 from sensing_interface.module_calls import call_sensing_framework
 
@@ -59,7 +61,7 @@ def main():
     # Train the model
     #train_uniker()
     # Perform inference
-    eval_uniker()
+    satellite_list = eval_uniker()
 
     # 5. Call the Sensing Framework
     generate_fake_data(1, access_intervals)
@@ -68,8 +70,10 @@ def main():
     # 6. Call the Verification module
 
     # 7. Run an Orekit simulation with the result to obtain metrics and final access times, save results in CZML
+    generate_czml_data()
 
     # 8. Spin up an HTTP server, display Cesium results of the final simulation with FOVs and the ground station/s
+    open_local_http_server()
 
 
 if __name__ == "__main__":

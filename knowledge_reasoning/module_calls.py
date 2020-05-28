@@ -18,5 +18,6 @@ def eval_uniker():
     model_path = os.path.join(os.getcwd(), "models", "TransE")
     train_path = os.path.join(data_path, "train.txt")
     simulator_main(
-        ["--cuda", "--do_test", "--model", "TransE", "-init", model_path, "--train_path", train_path,
+        ["--cuda", "--do_test",  "--do_save_ranks", "--model", "TransE", "-init", model_path, "--train_path", train_path,
          "--data_path", data_path])
+    print("hey!")
