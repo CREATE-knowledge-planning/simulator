@@ -1,0 +1,1 @@
+1.0	canParticipateObservation	HOSTS	isInstanceOf	OBSERVES	OBSERVEDPROPERTY_v	REQUIRES_v

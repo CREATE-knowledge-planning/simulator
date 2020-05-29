@@ -3,7 +3,8 @@ import shutil
 
 from neo4j import GraphDatabase
 
-from kg_access.mission import get_observedproperty_relations, get_requires_relations, get_mission_information
+from kg_access.mission import get_observedproperty_relations, get_requires_relations, get_mission_information, \
+    get_haslocation_relations
 from kg_access.satellites import get_all_active_satellites_with_instruments, \
     get_sensortype_relations, get_sensorband_relations, get_typeobserves_relations, get_sensorrule_relations, \
     retrieve_available_satellites, get_observes_relationships
@@ -71,6 +72,14 @@ def print_kg_reasoning_files(mission_id, access_intervals):
             entities.add(relation["tail"])
         kg.extend(requires_relations)
 
+        # HASLOCATION
+        relations.add("HASLOCATION")
+        haslocation_relations = get_haslocation_relations(mission_id, session)
+        for relation in haslocation_relations:
+            entities.add(relation["head"])
+            entities.add(relation["tail"])
+        kg.extend(haslocation_relations)
+
         # inVisibilityOfTarget
         relations.add("inVisibilityOfTarget")
         for sat_name, sat_info in access_intervals["output"].items():
@@ -122,8 +131,6 @@ def print_kg_reasoning_files(mission_id, access_intervals):
         ground_truth = retrieve_available_satellites(mission_id, session)
         mission_info = get_mission_information(mission_id, session)
 
-    print(kg)
-
     cwd = os.getcwd()
     int_path = os.path.join(cwd, "int_files")
     # Print a file with a relation between entities and indices
@@ -152,6 +159,9 @@ def print_kg_reasoning_files(mission_id, access_intervals):
     src_rules_path = os.path.join(cwd, "knowledge_reasoning", "MLN_rule.txt")
     dst_rules_path = os.path.join(int_path, "MLN_rule.txt")
     shutil.copy(src_rules_path, dst_rules_path)
+    shutil.copy(os.path.join(cwd, "knowledge_reasoning", "fc_observation.txt"), os.path.join(int_path, "fc_observation.txt"))
+    shutil.copy(os.path.join(cwd, "knowledge_reasoning", "fc_visibility.txt"),
+                os.path.join(int_path, "fc_visibility.txt"))
 
     # Print a ground truth with the set of satellites we know have a chance of participating at all
     ground_truth_path = os.path.join(int_path, "test.txt")

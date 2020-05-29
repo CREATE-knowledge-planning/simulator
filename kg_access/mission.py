@@ -63,6 +63,23 @@ def get_requires_relations(mission_id, session):
     return relations
 
 
+def get_haslocation_relations(mission_id, session):
+    result = session.run('MATCH (m:Mission)--(l:Location) '
+                         'WHERE m.mid={mission_id} RETURN DISTINCT m, l;',
+                         mission_id=mission_id)
+    relations = []
+    for record in result:
+        mission_name = record["m"]["name"]
+        location_name = record["l"]["name"]
+        relations.append({
+            "head": mission_name,
+            "relationship": "HASLOCATION",
+            "tail": location_name
+        })
+    return relations
+
+
+
 def get_mission_information(mission_id, session: Session):
     result = session.run('MATCH (m:Mission) '
                          'WHERE m.mid={mission_id} RETURN DISTINCT m;',

@@ -1,5 +1,5 @@
 from http_server.server_functions import open_local_http_server
-from knowledge_reasoning.module_calls import train_uniker, eval_uniker
+from knowledge_reasoning.module_calls import train_uniker, eval_uniker, forward_chain
 from knowledge_reasoning.print_files import print_kg_reasoning_files
 from mission_creation.kg_additions import add_volcano_mission
 from orekit_interface.access_intervals import obtain_access_times
@@ -61,11 +61,11 @@ def main():
     # Train the model
     #train_uniker()
     # Perform inference
-    satellite_list = eval_uniker()
+    satellite_list = forward_chain()
 
     # 5. Call the Sensing Framework
     generate_fake_data(1, access_intervals)
-    call_sensing_framework()
+    call_sensing_framework(satellite_list)
 
     # 6. Call the Verification module
 

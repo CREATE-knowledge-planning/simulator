@@ -1,0 +1,1 @@
+1.0	canParticipateVisibility	HOSTS	inVisibilityOfTarget	HASLOCATION_v
