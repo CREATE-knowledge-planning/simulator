@@ -20,7 +20,7 @@ def add_volcano_mission():
 
         # Add the observations that need to be measured
         now_time = datetime.now()
-        month_time = now_time + timedelta(days=7)
+        month_time = now_time + timedelta(days=14)
         summary = session.run('MATCH (op1:ObservableProperty), (op2:ObservableProperty), (op3:ObservableProperty), '
                               '(op4:ObservableProperty), (op5:ObservableProperty), (m:Mission) '
                               'WHERE op1.name = "Land surface temperature" AND op2.name = "Fire temperature" AND '
@@ -51,15 +51,29 @@ def add_volcano_mission():
                               ).summary()
         print(summary.counters)
 
+        def create_volcano(tx, name, lat, lon):
+            tx.run("CREATE (l1:Location {name: {name}, latitude: {lat}, longitude: {lon}})",
+                   name=name, lat=lat, lon=lon)
+
+
+
         # Add locations where measurements need to be made
-        summary = session.run('MATCH (m:Mission) '
-                              'WHERE m.mid = 1 '
-                              'CREATE (l1:Location {name: {name1}, latitude: {lat1}, longitude: {lon1}}), '
-                              '(m)-[:HASLOCATION]->(l1)',
-                              name1='Mauna Loa',
-                              lat1=19.4758589,
-                              lon1=-155.6483856,
+        session.write_transaction(create_volcano, "Kilauea", 19.4119543, -155.2747327)
+        session.write_transaction(create_volcano, "Etna", 37.7510042, 14.9846801)
+        session.write_transaction(create_volcano, "Piton de la Fournaise", -21.2494387, 55.7112432)
+        session.write_transaction(create_volcano, "Stromboli", 38.7918408, 15.1977824)
+        session.write_transaction(create_volcano, "Merapi", -7.5407171, 110.4282145)
+        session.write_transaction(create_volcano, "Erta Ale", 13.6069145, 40.6529394)
+        session.write_transaction(create_volcano, "Ol Doinyo Lengai", -2.7635781, 35.9056765)
+        session.write_transaction(create_volcano, "Mount Unzen", 32.7804497, 130.2497246)
+        session.write_transaction(create_volcano, "Mount Yasur", -19.527192, 169.4307231)
+        session.write_transaction(create_volcano, "Ambrym", -16.2388854, 168.042517)
+
+        summary = session.run('MATCH (m:Mission), (l:Location) '
+                              'WHERE m.mid = 1 AND l.name = "Kilauea" '
+                              'CREATE (m)-[:HASLOCATION]->(l)'
                               ).summary()
+
         print(summary.counters)
 
         # Add MEASURES relationships between the right instruments and the ObservableProperties

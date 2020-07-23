@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import shutil
 import subprocess
 from json import JSONEncoder
 
@@ -82,7 +83,22 @@ def obtain_access_times(mission_id):
     orekit_process = subprocess.run(["java", "-jar", jar_path], cwd=os.getcwd())
 
     # 5. Read Orekit results from file and put them into the right format for this code
-    accesses_path = os.path.join(os.getcwd(), "int_files", "accesses.json")
+    java_accesses_path = os.path.join(os.getcwd(), "int_files", "accesses.json")
+    accesses_folder = os.path.join(os.getcwd(), "int_files", "accesses")
+    accesses_path = os.path.join(accesses_folder, mission["locations"][0]["name"] + ".json")
+    if not os.path.exists(accesses_folder):
+        os.makedirs(accesses_folder)
+    shutil.copyfile(java_accesses_path, accesses_path)
+    with open(accesses_path, "r") as accesses_file:
+        accesses = json.load(accesses_file)
+
+    # Return a map<Satellite, map<Instrument, map<Location, Intervals>>
+    return accesses
+
+
+def read_access_times(location):
+    # 5. Read Orekit results from file and put them into the right format for this code
+    accesses_path = os.path.join(os.getcwd(), "int_files", "accesses", location + ".json")
     with open(accesses_path, "r") as accesses_file:
         accesses = json.load(accesses_file)
 

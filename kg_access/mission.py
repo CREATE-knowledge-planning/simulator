@@ -79,7 +79,6 @@ def get_haslocation_relations(mission_id, session):
     return relations
 
 
-
 def get_mission_information(mission_id, session: Session):
     result = session.run('MATCH (m:Mission) '
                          'WHERE m.mid={mission_id} RETURN DISTINCT m;',

@@ -59,7 +59,7 @@ def main():
     # 4. Call the Knowledge Reasoning
     print_kg_reasoning_files(1, access_intervals)
     # Train the model
-    #train_uniker()
+    train_uniker()
     # Perform inference
     satellite_list = forward_chain()
 

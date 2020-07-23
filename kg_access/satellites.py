@@ -43,7 +43,7 @@ def retrieve_instrument_characteristics(sensor_name, session):
                 "R": 1.,
                 "H": {"c1": 233., "c2": 6.67}
             }
-
+            characteristics[observable] = obs_characteristics
         elif observable == "Fire temperature":
             obs_characteristics = {
                 "A": 1.,
