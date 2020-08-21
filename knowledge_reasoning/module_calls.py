@@ -1,7 +1,7 @@
 import os
 
-from UniKER.kge.run import simulator_main
-from UniKER.run import run_fc
+from uniker.kge.run import simulator_main
+from uniker.run import run_fc
 
 
 def train_uniker():

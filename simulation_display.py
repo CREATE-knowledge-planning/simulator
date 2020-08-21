@@ -6,16 +6,20 @@ from pathlib import Path
 from neo4j import GraphDatabase
 import numpy as np
 
-from mission_creation.kg_additions import add_volcano_mission
+from knowledge_reasoning.print_files import print_kg_reasoning_files
+from mission_creation.kg_additions import clear_kg, add_volcano_mission, add_volcano_locations
 from sensing_interface.data_feed import generate_simulations
+from orekit_interface.access_intervals import read_access_times
 import Verification.main as vf_main
 
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
 # import rasterio
 # from rasterio.plot import show
 import geopandas
+
 
 def generate_simulation_text_info(simulation_info):
     textstr = '\n'.join([
@@ -149,10 +153,7 @@ def display_simulation_results(simulation_probabilities):
     figure.canvas.start_event_loop(0)
 
 
-def extract_team(simulation_path, max_satellites):
-    simulation_info_path = Path(simulation_path, 'simulation_information.json')
-    with simulation_info_path.open() as simulation_info_file:
-        simulation_info = json.load(simulation_info_file)
+def extract_team(simulation_info, max_satellites):
     team = {}
     for satellite_name, satellite_info in simulation_info["data_locations"].items():
         team[satellite_name] = []
@@ -178,39 +179,43 @@ def extract_team(simulation_path, max_satellites):
     return pruned_team
 
 
-def extract_location(simulation_path):
-    simulation_info_path = Path(simulation_path, 'simulation_information.json')
-    with simulation_info_path.open() as simulation_info_file:
-        simulation_info = json.load(simulation_info_file)
-    return simulation_info["location"]
-
-
 def compute_probabilities():
     paths = Path('./int_files/simulations/')
     simulation_probabilities = {"Method 1": [], "Method 2": [], "Method 3": []}
     for simulation_path in [p for p in paths.iterdir() if p.is_dir()]:
+        simulation_info_path = simulation_path / 'simulation_information.json'
+        with simulation_info_path.open() as simulation_info_file:
+            simulation_info = json.load(simulation_info_file)
+        
         # Method 1
         # Call Amy code with invented Zhaoliang probabilities and the full team from simulation
-        team = extract_team(simulation_path, 10)
-        location = extract_location(simulation_path)
+        team = extract_team(simulation_info, 10)
+        location = simulation_info["location"]
         print(team, location)
         final_prob = vf_main.main(team, location)
         simulation_probabilities["Method 1"] = final_prob
 
         # Method 2
+        # Full process (UniKER - Sensing - Verification)
+        mission_id = simulation_info["mission_id"]
+        access_intervals = read_access_times(location)
+        print_kg_reasoning_files(mission_id, access_intervals, simulation_path)
 
         # Method 3
 
         # ...
     return simulation_probabilities
 
+
 def main():
     # This is the main process from mission to list of participating satellites
 
     # 1. Input a mission into the Knowledge Graph
     #add_volcano_mission()
+    clear_kg()
+    add_volcano_locations()
 
-    #generate_simulations(100, 0.5)
+    generate_simulations(100, 0.5)
 
     simulation_probabilities = compute_probabilities()
 

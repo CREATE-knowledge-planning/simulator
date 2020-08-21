@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+from pathlib import Path
 import shutil
 import subprocess
 from json import JSONEncoder
@@ -98,8 +99,8 @@ def obtain_access_times(mission_id):
 
 def read_access_times(location):
     # 5. Read Orekit results from file and put them into the right format for this code
-    accesses_path = os.path.join(os.getcwd(), "int_files", "accesses", location + ".json")
-    with open(accesses_path, "r") as accesses_file:
+    accesses_path = Path(f'./int_files/accesses/{location}.json')
+    with accesses_path.open() as accesses_file:
         accesses = json.load(accesses_file)
 
     # Return a map<Satellite, map<Instrument, map<Location, Intervals>>

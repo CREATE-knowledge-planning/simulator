@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import shutil
 
 from neo4j import GraphDatabase
@@ -10,7 +11,7 @@ from kg_access.satellites import get_all_active_satellites_with_instruments, \
     retrieve_available_satellites, get_observes_relationships
 
 
-def print_kg_reasoning_files(mission_id, access_intervals):
+def print_kg_reasoning_files(mission_id, access_intervals, simulation_path):
     # Generate the Knowledge Base relationship by relationship, saving the entities in a set to later generate the
     # dictionary
 
@@ -34,7 +35,7 @@ def print_kg_reasoning_files(mission_id, access_intervals):
             entities.add(sat_name)
             for sensor in satellite["sensors"]:
                 sensor_name = sensor["name"]
-                sensor_instance_name = sat_name + "|" + sensor_name
+                sensor_instance_name = f"{sat_name}|{sensor_name}"
                 entities.add(sensor_instance_name)
                 kg.append({
                     "head": sat_name,
@@ -131,40 +132,37 @@ def print_kg_reasoning_files(mission_id, access_intervals):
         ground_truth = retrieve_available_satellites(mission_id, session)
         mission_info = get_mission_information(mission_id, session)
 
-    cwd = os.getcwd()
-    int_path = os.path.join(cwd, "int_files")
     # Print a file with a relation between entities and indices
-    entities_dict_path = os.path.join(int_path, "entities.dict")
+    entities_dict_path = simulation_path / "entities.dict"
     inv_entity_dict = {}
-    with open(entities_dict_path, 'w', encoding='utf8') as entities_dict_file:
+    with entities_dict_path.open('w', encoding='utf8') as entities_dict_file:
         for idx, entity in enumerate(entities):
-            entities_dict_file.write(str(idx) + "\t" + entity + "\n")
+            entities_dict_file.write(f"{idx}\t{entity}\n")
             inv_entity_dict[entity] = idx
 
     # Print a file with a relation between predicates and indices
-    relations_dict_path = os.path.join(int_path, "relations.dict")
+    relations_dict_path = simulation_path / "relations.dict"
     inv_relation_dict = {}
-    with open(relations_dict_path, 'w', encoding='utf8') as relations_dict_file:
+    with relations_dict_path.open('w', encoding='utf8') as relations_dict_file:
         for idx, relation in enumerate(relations):
-            relations_dict_file.write(str(idx) + "\t" + relation + "\n")
+            relations_dict_file.write(f"{idx}\t{relation}\n")
             inv_relation_dict[relation] = idx
 
     # Print the knowledge base into a file
-    kg_path = os.path.join(int_path, "train.txt")
-    with open(kg_path, 'w', encoding='utf8') as kg_file:
+    kg_path = simulation_path / "train.txt"
+    with kg_path.open('w', encoding='utf8') as kg_file:
         for fact in kg:
-            kg_file.write(fact["head"] + "\t" + fact["relationship"] + "\t" + fact["tail"] + "\n")
+            kg_file.write(f'{fact["head"]}\t{fact["relationship"]}\t{fact["tail"]}\n')
 
     # Print a file with the logic rules
-    src_rules_path = os.path.join(cwd, "knowledge_reasoning", "MLN_rule.txt")
-    dst_rules_path = os.path.join(int_path, "MLN_rule.txt")
+    src_rules_path = Path("./knowledge_reasoning/MLN_rule.txt")
+    dst_rules_path = simulation_path / "MLN_rule.txt"
     shutil.copy(src_rules_path, dst_rules_path)
-    shutil.copy(os.path.join(cwd, "knowledge_reasoning", "fc_observation.txt"), os.path.join(int_path, "fc_observation.txt"))
-    shutil.copy(os.path.join(cwd, "knowledge_reasoning", "fc_visibility.txt"),
-                os.path.join(int_path, "fc_visibility.txt"))
+    shutil.copy(Path("./knowledge_reasoning/fc_observation.txt"), simulation_path / "fc_observation.txt")
+    shutil.copy(Path("./knowledge_reasoning/fc_visibility.txt"), simulation_path / "fc_visibility.txt")
 
     # Print a ground truth with the set of satellites we know have a chance of participating at all
-    ground_truth_path = os.path.join(int_path, "test.txt")
-    with open(ground_truth_path, 'w', encoding='utf8') as ground_truth_file:
+    ground_truth_path = simulation_path / "test.txt"
+    with ground_truth_path.open('w', encoding='utf8') as ground_truth_file:
         for satellite in ground_truth:
-            ground_truth_file.write(satellite["name"] + "\t" + "canParticipate" + "\t" + mission_info["name"] + "\n")
+            ground_truth_file.write(f'{satellite["name"]}\tcanParticipate\t{mission_info["name"]}\n')

@@ -4,11 +4,13 @@ import re
 import shutil
 import unicodedata
 import random
+from pathlib import Path
 
 import numpy as np
 from neo4j import GraphDatabase
 
 from kg_access.satellites import retrieve_available_satellites
+from mission_creation.kg_additions import add_volcano_mission
 from orekit_interface.access_intervals import obtain_access_times, read_access_times
 
 
@@ -175,7 +177,7 @@ def generate_simulation(mission_id, access_intervals, eruption_length, eruption_
                             if access_intervals["output"][satellite["name"]][instrument["name"]][location]["timeArray"]:
                                 observation_name = slugify(satellite["name"] + "__" + instrument["name"] + "__" + location + "__" + observation)
                                 data_locations_json[satellite["name"]][instrument["name"]][observation][location] = observation_name + ".npy"
-                                array_path = os.path.join(data_streams_path, observation_name + ".npy")
+                                array_path = data_streams_path / f"{observation_name}.npy"
                                 time_array, data_array = generate_fake_timeline(instrument["characteristics"][observation]["Q"],
                                                                                 access_intervals["output"][satellite["name"]][instrument["name"]][location],
                                                                                 fake_data_generators[location][observation])
@@ -184,8 +186,9 @@ def generate_simulation(mission_id, access_intervals, eruption_length, eruption_
                                 #     np.save(f, data_array)
                                 print(observation_name)
 
-    with open(simulation_information_path, 'w', encoding='utf8') as simulation_information_file:
+    with simulation_information_path.open('w', encoding='utf8') as simulation_information_file:
         simulation_information_json = {
+            "mission_id": mission_id,
             "eruption_length": eruption_length,
             "eruption_start": eruption_start,
             "location": location,
@@ -201,29 +204,11 @@ def generate_simulation(mission_id, access_intervals, eruption_length, eruption_
         json.dump(simulation_information_json, simulation_information_file)
 
 
-def modify_mission_location(mission, location):
-    # Connect to database, open session
-    uri = "bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
-
-    with driver.session() as session:
-        session.run('MATCH (m:Mission)-[r:HASLOCATION]-(l:Location) '
-                    'DELETE r;').summary()
-        session.run('MATCH (m:Mission), (l:Location) '
-                    'WHERE m.mid = {mid} AND l.name = {name} '
-                    'CREATE (m)-[:HASLOCATION]->(l)',
-                    mid=mission,
-                    name=location
-                    ).summary()
-
-
 def generate_simulations(quantity, event_fraction):
-    cwd = os.getcwd()
-    int_path = os.path.join(cwd, "int_files")
-    simulations_path = os.path.join(int_path, "simulations")
-    if not os.path.exists(simulations_path):
-        os.makedirs(simulations_path)
-    accesses_path = os.path.join(int_path, "accesses")
+    int_path = Path("./int_files")
+    simulations_path = int_path / "simulations"
+    simulations_path.mkdir(parents=True, exist_ok=True)
+    accesses_path = int_path / "accesses"
 
     eruption_length_range = [12., 120.]  # hours
     eruption_start_range = [0., 168.]  # hours since beginning of simulation
@@ -240,13 +225,13 @@ def generate_simulations(quantity, event_fraction):
     # For each simulation, sample a value for each parameter, create a simulation, save it under int_files
     for sim_number in range(quantity):
         # Create paths
-        simulation_path = os.path.join(simulations_path, "simulation_" + str(sim_number))
-        if os.path.exists(simulation_path):
+        simulation_path = simulations_path / f"simulation_{sim_number}"
+        if simulation_path.exists():
             shutil.rmtree(simulation_path)
-        os.makedirs(simulation_path)
+        simulation_path.mkdir(parents=True, exist_ok=True)
 
-        simulation_information_path = os.path.join(simulation_path, "simulation_information.json")
-        data_streams_path = os.path.join(simulation_path, "data_streams")
+        simulation_information_path = simulation_path / "simulation_information.json"
+        data_streams_path = simulation_path / "data_streams"
 
         # Sample values
         eruption_length = random.uniform(*eruption_length_range)
@@ -260,15 +245,17 @@ def generate_simulations(quantity, event_fraction):
         max_terrain_displacement = random.uniform(*max_terrain_displacement_range)
         max_so2_levels = random.uniform(*max_so2_levels_range)
 
+        # Create a mission in the KG
+        mission_id = add_volcano_mission(location)
+
         # Generate accesses if not already there
-        access_path = os.path.join(accesses_path, location + ".json")
-        if not os.path.exists(access_path):
-            modify_mission_location(1, location)
-            access_times = obtain_access_times(1)
+        access_path = accesses_path / f"{location}.json"
+        if not access_path.exists():
+            access_times = obtain_access_times(mission_id)
         else:
             access_times = read_access_times(location)
 
         # Create simulation
-        generate_simulation(1, access_times, eruption_length, eruption_start, location, speed, size,
+        generate_simulation(mission_id, access_times, eruption_length, eruption_start, location, speed, size,
                             max_tir_temperature, max_swir_temperature, max_ash_cloud, max_terrain_displacement,
                             max_so2_levels, simulation_information_path, data_streams_path)
