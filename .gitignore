@@ -4,3 +4,4 @@ Sensing-planning-framework/
 UniKER/
 Verification/
 models/
+**/__pycache__/
