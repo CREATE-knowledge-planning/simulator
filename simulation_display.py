@@ -5,14 +5,19 @@ from pathlib import Path
 
 from neo4j import GraphDatabase
 import numpy as np
+from kg_access.satellites import get_sensors_from_satellite_list
+from knowledge_reasoning.module_calls import forward_chain
 
 from knowledge_reasoning.print_files import print_kg_reasoning_files
 from mission_creation.kg_additions import clear_kg, add_volcano_mission, add_volcano_locations
 from sensing_interface.data_feed import generate_simulations
 from orekit_interface.access_intervals import read_access_times
-import Verification.main as vf_main
+# import Verification.main as vf_main
 
 import matplotlib
+
+from sensing_interface.module_calls import run_sensor_planner
+from verification_interface.module_calls import run_verification
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -192,14 +197,25 @@ def compute_probabilities():
         team = extract_team(simulation_info, 10)
         location = simulation_info["location"]
         print(team, location)
-        final_prob = vf_main.main(team, location)
-        simulation_probabilities["Method 1"] = final_prob
+        # final_prob = vf_main.main(team, location)
+        # simulation_probabilities["Method 1"] = final_prob
 
         # Method 2
         # Full process (UniKER - Sensing - Verification)
         mission_id = simulation_info["mission_id"]
         access_intervals = read_access_times(location)
         print_kg_reasoning_files(mission_id, access_intervals, simulation_path)
+        satellite_list = forward_chain(simulation_path)
+
+        uri = "bolt://localhost:7687"
+        driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+        with driver.session() as session:
+            team = get_sensors_from_satellite_list(session, satellite_list)
+        team = run_sensor_planner(team, simulation_info)
+
+        max_prob, final_team = run_verification(team, simulation_path, simulation_info, access_intervals)
+
+        simulation_probabilities["Method 2"] = max_prob
 
         # Method 3
 
@@ -210,15 +226,17 @@ def compute_probabilities():
 def main():
     # This is the main process from mission to list of participating satellites
 
-    # 1. Input a mission into the Knowledge Graph
-    #add_volcano_mission()
-    clear_kg()
-    add_volcano_locations()
+    # 1. Clear the KG for a new simulation run
+    #clear_kg()
+    #add_volcano_locations()
 
-    generate_simulations(100, 0.5)
+    # 2. Generate 100 simulations
+    #generate_simulations(100, 0.5)
 
+    # 3. Compute the success probabilities for each approach and simulation
     simulation_probabilities = compute_probabilities()
 
+    # 4. Display the simulation results on the GUI
     display_simulation_results(simulation_probabilities)
 
 

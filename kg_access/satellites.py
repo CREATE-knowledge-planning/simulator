@@ -1,3 +1,6 @@
+from neo4j import Session
+
+
 def retrieve_instrument_accuracies(sensor_name, session):
     """Retrieve information for the accuracies of different measurements from a sensor"""
 
@@ -38,7 +41,7 @@ def retrieve_instrument_characteristics(sensor_name, session):
         if observable == "Land surface temperature":
             obs_characteristics = {
                 "A": 1.,
-                "B": 0.,
+                "B": 1.,
                 "Q": 0.1,
                 "R": 1.,
                 "H": {"c1": 233., "c2": 6.67}
@@ -47,7 +50,7 @@ def retrieve_instrument_characteristics(sensor_name, session):
         elif observable == "Fire temperature":
             obs_characteristics = {
                 "A": 1.,
-                "B": 0.,
+                "B": 1.,
                 "Q": 0.1,
                 "R": 1.,
                 "H": {"c1": 300., "c2": 40.}
@@ -56,7 +59,7 @@ def retrieve_instrument_characteristics(sensor_name, session):
         elif observable == "Cloud type":
             obs_characteristics = {
                 "A": 1.,
-                "B": 0.,
+                "B": 1.,
                 "Q": 0.05,
                 "R": 0.01,
                 "H": {"c1": 0., "c2": 1.}
@@ -65,7 +68,7 @@ def retrieve_instrument_characteristics(sensor_name, session):
         elif observable == "Land surface topography":
             obs_characteristics = {
                 "A": 1.,
-                "B": 0.,
+                "B": 1.,
                 "Q": 0.1,
                 "R": 0.1,
                 "H": {"c1": 0., "c2": 1.}
@@ -74,7 +77,7 @@ def retrieve_instrument_characteristics(sensor_name, session):
         elif observable == "Atmospheric Chemistry - SO2 (column/profile)":
             obs_characteristics = {
                 "A": 1.,
-                "B": 0.,
+                "B": 1.,
                 "Q": 0.1,
                 "R": 1.,
                 "H": {"c1": 0., "c2": 1.}
@@ -184,6 +187,16 @@ def get_all_active_satellites_with_instruments(session):
         satellite_info["sensors"] = sensors
         satellites.append(satellite_info)
     return satellites
+
+
+def get_sensors_from_satellite_list(session, satellite_list):
+    team = []
+    for platform in satellite_list:
+        team.append({
+            "name": platform,
+            "sensors": retrieve_valid_instruments(platform, session)
+        })
+    return team
 
 
 def get_observes_relationships(session):

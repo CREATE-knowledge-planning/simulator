@@ -45,7 +45,7 @@ def add_volcano_mission(location):
         mission_count = result.single()[0]
 
         # Create a sample mission
-        mission_id = mission_count+1
+        mission_id = mission_count + 1
         summary = session.run('CREATE (m:Mission {mid: {mission_id}, name: {name}, description: {description}})',
                               mission_id=mission_id,
                               name=f"Mission {mission_id} - Active Volcano Monitoring",
@@ -88,7 +88,7 @@ def add_volcano_mission(location):
         print(summary.counters)
 
         summary = session.run('MATCH (m:Mission), (l:Location) '
-                              'WHERE m.mid = {mission_id} AND l.name = "{location}" '
+                              'WHERE m.mid = {mission_id} AND l.name = {location} '
                               'CREATE (m)-[:HASLOCATION]->(l)',
                               mission_id=mission_id,
                               location=location

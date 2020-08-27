@@ -43,10 +43,8 @@ class DateTimeEncoder(JSONEncoder):
 
 def print_orekit_info(satellites, mission):
     # 1. Create directory with all intermediate files
-    cwd = os.getcwd()
-    int_path = os.path.join(cwd, "int_files")
-    if not os.path.isdir(int_path):
-        os.makedirs(int_path)
+    int_path = Path("./int_files")
+    int_path.mkdir(parents=True, exist_ok=True)
 
     # 2. Write JSON files with the information in satellites and the mission, which includes
     # all involved satellites;
@@ -54,12 +52,12 @@ def print_orekit_info(satellites, mission):
     # for each instrument - name, FOV type, FOV values;
     # all involved locations from mission
 
-    satellites_path = os.path.join(int_path, "satellites.json")
-    mission_path = os.path.join(int_path, "mission.json")
+    satellites_path = int_path / "satellites.json"
+    mission_path = int_path / "mission.json"
 
-    with open(satellites_path, "w") as satellites_file:
+    with satellites_path.open("w") as satellites_file:
         json.dump(satellites, satellites_file, cls=DateTimeEncoder)
-    with open(mission_path, "w") as mission_file:
+    with mission_path.open("w") as mission_file:
         json.dump(mission, mission_file, cls=DateTimeEncoder)
 
 
@@ -80,17 +78,16 @@ def obtain_access_times(mission_id):
 
     driver.close()
     # 5. Call Orekit and wait for the results before continuing
-    jar_path = os.path.join(os.getcwd(), "jar_files", "propagator.jar")
-    orekit_process = subprocess.run(["java", "-jar", jar_path], cwd=os.getcwd())
+    jar_path = Path("./jar_files/propagator.jar")
+    orekit_process = subprocess.run(["java", "-jar", str(jar_path)], cwd=os.getcwd())
 
     # 5. Read Orekit results from file and put them into the right format for this code
-    java_accesses_path = os.path.join(os.getcwd(), "int_files", "accesses.json")
-    accesses_folder = os.path.join(os.getcwd(), "int_files", "accesses")
-    accesses_path = os.path.join(accesses_folder, mission["locations"][0]["name"] + ".json")
-    if not os.path.exists(accesses_folder):
-        os.makedirs(accesses_folder)
+    java_accesses_path = Path("./int_files/accesses.json")
+    accesses_folder = Path("./int_files/accesses")
+    accesses_path = accesses_folder / f'{mission["locations"][0]["name"]}.json'
+    accesses_folder.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(java_accesses_path, accesses_path)
-    with open(accesses_path, "r") as accesses_file:
+    with accesses_path.open("r") as accesses_file:
         accesses = json.load(accesses_file)
 
     # Return a map<Satellite, map<Instrument, map<Location, Intervals>>

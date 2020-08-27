@@ -4,8 +4,6 @@ from knowledge_reasoning.print_files import print_kg_reasoning_files
 from mission_creation.kg_additions import add_volcano_mission
 from orekit_interface.access_intervals import obtain_access_times
 from orekit_interface.czml_interface import generate_czml_data
-from sensing_interface.data_feed import generate_fake_data
-from sensing_interface.module_calls import call_sensing_framework
 
 
 def write_mln_evidence(evidence, output_path):
