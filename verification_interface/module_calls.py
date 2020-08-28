@@ -14,8 +14,7 @@ from verification.parseADV import parse_adv_main
 
 
 def random_team_choice(team, num_agents):
-    new_team = copy.deepcopy(team)
-    new_team = random.choices(new_team, k=num_agents)
+    new_team = random.sample(team, k=num_agents)
     return new_team
 
 
@@ -44,8 +43,8 @@ def run_verification(original_team, simulation_path, simulation_info, access_int
     entity_dict, inv_entity_dict = load_entity_dict(path_to_dict)
     num_states = inf
     base_team = copy.deepcopy(original_team)
-    num_agents = 10
-    while num_states > 200:
+    num_agents = 7
+    while num_states > 2000:
         base_team = random_team_choice(base_team, num_agents)
         team = construct_team_from_list(base_team)
         target = simulation_info["location"]
@@ -58,8 +57,6 @@ def run_verification(original_team, simulation_path, simulation_info, access_int
         a_list, s_list, m_list = generate_asm_lists(team, entity_dict, a_prefix, s_prefix, m_prefix)
         num_asm = [len(a_list), len(s_list), len(m_list)]
         num_a, num_s, num_m = num_asm
-
-        reward_list = ['numAgents']
         print('# of agents, sensors, meas: ', num_asm)
 
         check_time(team, team_time_id, m_list, entity_dict, s_prefix, m_prefix)
