@@ -44,7 +44,7 @@ def run_verification(original_team, simulation_path, simulation_info, access_int
     num_states = inf
     base_team = copy.deepcopy(original_team)
     num_agents = 7
-    while num_states > 2000:
+    while num_states > 1000:
         base_team = random_team_choice(base_team, num_agents)
         team = construct_team_from_list(base_team)
         target = simulation_info["location"]

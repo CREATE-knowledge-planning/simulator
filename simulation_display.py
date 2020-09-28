@@ -18,7 +18,7 @@ import matplotlib
 
 from sensing_interface.module_calls import run_sensor_planner
 from verification_interface.module_calls import run_verification
-matplotlib.use('Agg')
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 # import rasterio
@@ -46,7 +46,6 @@ def generate_simulation_text_info(simulation_info):
 def display_simulation_results(simulation_probabilities):
     cdf_line = None
     cdf2_line = None
-    cdf3_line = None
 
     plt.ion()
     figure = plt.figure(constrained_layout=True, figsize=(15, 8))
@@ -62,9 +61,9 @@ def display_simulation_results(simulation_probabilities):
     sim_text = sim_info.text(0.05, 0.95, "", transform=sim_info.transAxes, fontsize=12, verticalalignment='top')
 
     cdf_axes = figure.add_subplot(gs[1, 1])
-    cdf_axes.set_title('Montecarlo CDF')
-    cdf_axes.set_xlabel('Simulations')
-    cdf_axes.set_ylabel('Probabilities')
+    cdf_axes.set_title('Montecarlo Results')
+    cdf_axes.set_xlabel('Simulation number')
+    cdf_axes.set_ylabel('Probability of mission success')
     cdf_info = figure.add_subplot(gs[1, 2])
     cdf_info.axis('off')
     cdf_text = cdf_info.text(0.05, 0.95, "", transform=cdf_info.transAxes, fontsize=12, verticalalignment='top')
@@ -77,9 +76,7 @@ def display_simulation_results(simulation_probabilities):
     earth_info = geopandas.read_file(path)
     earth_info.plot(ax=earth_axes, facecolor='none', edgecolor='black')
 
-    cwd = os.getcwd()
-    int_path = os.path.join(cwd, "int_files")
-    simulations_path = os.path.join(int_path, "simulations")
+    simulations_path = Path("./int_files/simulations/")
 
     # Connect to database, open session
     uri = "bolt://localhost:7687"
@@ -87,12 +84,12 @@ def display_simulation_results(simulation_probabilities):
 
     # Updates
     success_probs = []
-    success_probs_m2 = []
-    success_probs_m3 = []
+    success_probs_bench = []
+    x_axis = []
 
-    for simulation_idx, folder in enumerate(os.listdir(simulations_path)):
-        simulation_path = os.path.join(simulations_path, folder, "simulation_information.json")
-        with open(simulation_path, "r") as simulation_file:
+    for simulation_idx, folder in enumerate([x for x in simulations_path.iterdir() if x.is_dir()]):
+        simulation_path = folder / "simulation_information.json"
+        with simulation_path.open("r") as simulation_file:
             simulation_info = json.load(simulation_file)
 
         with driver.session() as session:
@@ -112,38 +109,24 @@ def display_simulation_results(simulation_probabilities):
         sim_text.set_text(generate_simulation_text_info(simulation_info))
 
         # Compute probs for demo video
-        prob5 = 1.0
-        for i in range(5):
-            prob5 *= (1. - min(1.0, max(0.0, random.gauss(0.4, 0.05))))
-        prob5 = 1. - prob5
-        prob10 = 1.0
-        for i in range(10):
-            prob10 *= (1. - min(1.0, max(0.0, random.gauss(0.4, 0.05))))
-        prob10 = 1. - prob10
-        print(prob5, prob10)
-        success_probs.append(prob5)
-        success_probs_m2.append(prob10)
+        success_probs_bench.append(0.2)
+        success_probs_bench.sort()
+        success_probs.append(simulation_probabilities["Full Pipeline"][simulation_idx])
         success_probs.sort()
-        success_probs_m2.sort()
-        success_probs_m3.append(simulation_probabilities["Method 1"][simulation_idx])
-        success_probs_m3.sort()
+
+        x_axis.append(simulation_idx)
 
         if cdf_line is None:
-            cdf_line = cdf_axes.plot(success_probs, label="KG - 5 satellites")[0]
-        cdf_line.set_data(range(simulation_idx), success_probs)
+            cdf_line = cdf_axes.plot(x_axis, success_probs, marker='.', linestyle='', label="Full Pipeline")[0]
+        cdf_line.set_data(x_axis, success_probs)
 
         if cdf2_line is None:
-            cdf2_line = cdf_axes.plot(success_probs_m2, color="red", label="KG - 10 satellites")[0]
-        cdf2_line.set_data(range(simulation_idx), success_probs_m2)
-
-        if cdf3_line is None:
-            cdf3_line = cdf_axes.plot(success_probs_m3, color="green", label="Method 1")[0]
-        cdf3_line.set_data(range(simulation_idx), success_probs_m3)
+            cdf2_line = cdf_axes.plot(x_axis, success_probs_bench, color="red", label="Benchmark Team")[0]
+        cdf2_line.set_data(x_axis, success_probs_bench)
 
         cdf_actualtext = '\n'.join([
-            f"KG - 5 Satellites: {np.mean(success_probs):.5f}",
-            f"KG - 10 Satellites: {np.mean(success_probs_m2):.5f}",
-            f"Method 1: {np.mean(success_probs_m3):.5f}",
+            f"Full Pipeline: {np.mean(success_probs):.5f}",
+            f"Benchmark Team: {np.mean(success_probs_bench):.5f}"
         ])
         cdf_text.set_text(cdf_actualtext)
 
@@ -186,22 +169,15 @@ def extract_team(simulation_info, max_satellites):
 
 def compute_probabilities():
     paths = Path('./int_files/simulations/')
-    simulation_probabilities = {"Method 1": [], "Method 2": [], "Method 3": []}
+    simulation_probabilities = {"Full Pipeline": [], "Benchmark Team": []}
     for simulation_path in [p for p in paths.iterdir() if p.is_dir()]:
         simulation_info_path = simulation_path / 'simulation_information.json'
         with simulation_info_path.open() as simulation_info_file:
             simulation_info = json.load(simulation_info_file)
-        
-        # Method 1
-        # Call Amy code with invented Zhaoliang probabilities and the full team from simulation
-        team = extract_team(simulation_info, 10)
-        location = simulation_info["location"]
-        print(team, location)
-        # final_prob = vf_main.main(team, location)
-        # simulation_probabilities["Method 1"] = final_prob
 
-        # Method 2
+        # Method 1
         # Full process (UniKER - Sensing - Verification)
+        location = simulation_info["location"]
         mission_id = simulation_info["mission_id"]
         access_intervals = read_access_times(location)
         print_kg_reasoning_files(mission_id, access_intervals, simulation_path)
@@ -212,14 +188,27 @@ def compute_probabilities():
         with driver.session() as session:
             team = get_sensors_from_satellite_list(session, satellite_list)
         team = run_sensor_planner(team, simulation_info)
+        team_probs_info_path = simulation_path / 'team_probs.json'
+        with team_probs_info_path.open('w') as team_probs_info_file:
+            json.dump(team, team_probs_info_file)
 
         max_prob, final_team = run_verification(team, simulation_path, simulation_info, access_intervals)
 
-        simulation_probabilities["Method 2"] = max_prob
+        simulation_probabilities["Full Pipeline"].append(max_prob)
 
-        # Method 3
+        # Method 2
 
         # ...
+    simulation_results = paths / 'results.json'
+    with simulation_results.open('w') as simulation_res_file:
+        json.dump(simulation_probabilities, simulation_res_file)
+    return simulation_probabilities
+
+
+def load_probabilities():
+    simulation_results_path = Path("./int_files/simulations/results.json")
+    with simulation_results_path.open('r', encoding='utf-8') as simulation_res_file:
+        simulation_probabilities = json.load(simulation_res_file)
     return simulation_probabilities
 
 
@@ -234,7 +223,8 @@ def main():
     #generate_simulations(100, 0.5)
 
     # 3. Compute the success probabilities for each approach and simulation
-    simulation_probabilities = compute_probabilities()
+    # simulation_probabilities = compute_probabilities()
+    simulation_probabilities = load_probabilities()
 
     # 4. Display the simulation results on the GUI
     display_simulation_results(simulation_probabilities)
