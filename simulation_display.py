@@ -215,11 +215,11 @@ def main():
     # This is the main process from mission to list of participating satellites
 
     # 1. Clear the KG for a new simulation run
-    #clear_kg()
-    #add_volcano_locations()
+    clear_kg()
+    add_volcano_locations()
 
     # 2. Generate 100 simulations
-    #generate_simulations(100, 0.5)
+    generate_simulations(100, 0.5)
 
     # 3. Compute the success probabilities for each approach and simulation
     simulation_probabilities = compute_probabilities()
