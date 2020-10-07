@@ -2,6 +2,8 @@ from random import random
 
 from neo4j import GraphDatabase
 
+from kg_access.obtain_driver import get_neo4j_driver
+
 
 def save_evidence(session, results, evidence, predicates, predicate_types):
     for record in results:
@@ -29,8 +31,7 @@ def save_evidence(session, results, evidence, predicates, predicate_types):
 
 
 def create_logic():
-    uri = "bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+    driver = get_neo4j_driver()
 
     evidence = []
     predicates = []

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from neo4j import GraphDatabase
 import numpy as np
+from kg_access.obtain_driver import get_neo4j_driver
 from kg_access.satellites import get_sensors_from_satellite_list
 from knowledge_reasoning.module_calls import forward_chain
 
@@ -79,8 +80,7 @@ def display_simulation_results(simulation_probabilities):
     simulations_path = Path("./int_files/simulations/")
 
     # Connect to database, open session
-    uri = "bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+    driver = get_neo4j_driver()
 
     # Updates
     success_probs = []
@@ -183,8 +183,7 @@ def compute_probabilities():
         print_kg_reasoning_files(mission_id, access_intervals, simulation_path)
         satellite_list = forward_chain(simulation_path)
 
-        uri = "bolt://localhost:7687"
-        driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+        driver = get_neo4j_driver()
         with driver.session() as session:
             team = get_sensors_from_satellite_list(session, satellite_list)
         team = run_sensor_planner(team, simulation_info)
@@ -223,8 +222,8 @@ def main():
     #generate_simulations(100, 0.5)
 
     # 3. Compute the success probabilities for each approach and simulation
-    # simulation_probabilities = compute_probabilities()
-    simulation_probabilities = load_probabilities()
+    simulation_probabilities = compute_probabilities()
+    #simulation_probabilities = load_probabilities()
 
     # 4. Display the simulation results on the GUI
     display_simulation_results(simulation_probabilities)

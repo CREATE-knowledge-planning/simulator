@@ -3,7 +3,7 @@ from neo4j import Session
 
 def get_target_locations(mission_id, session):
     result = session.run('MATCH (m:Mission)-[:HASLOCATION]-(l:Location) '
-                         'WHERE m.mid={mission_id} RETURN DISTINCT l;',
+                         'WHERE m.mid=$mission_id RETURN DISTINCT l;',
                          mission_id=mission_id)
     locations = []
     for record in result:
@@ -18,7 +18,7 @@ def get_target_locations(mission_id, session):
 
 def get_required_observations(mission_id, session):
     result = session.run('MATCH (m:Mission)--(o:Observation) '
-                         'WHERE m.mid={mission_id} RETURN DISTINCT o;',
+                         'WHERE m.mid=$mission_id RETURN DISTINCT o;',
                          mission_id=mission_id)
     observations = []
     for record in result:
@@ -49,7 +49,7 @@ def get_observedproperty_relations(session):
 
 def get_requires_relations(mission_id, session):
     result = session.run('MATCH (m:Mission)--(o:Observation) '
-                         'WHERE m.mid={mission_id} RETURN DISTINCT m, o;',
+                         'WHERE m.mid=$mission_id RETURN DISTINCT m, o;',
                          mission_id=mission_id)
     relations = []
     for record in result:
@@ -65,7 +65,7 @@ def get_requires_relations(mission_id, session):
 
 def get_haslocation_relations(mission_id, session):
     result = session.run('MATCH (m:Mission)--(l:Location) '
-                         'WHERE m.mid={mission_id} RETURN DISTINCT m, l;',
+                         'WHERE m.mid=$mission_id RETURN DISTINCT m, l;',
                          mission_id=mission_id)
     relations = []
     for record in result:
@@ -81,7 +81,7 @@ def get_haslocation_relations(mission_id, session):
 
 def get_mission_information(mission_id, session: Session):
     result = session.run('MATCH (m:Mission) '
-                         'WHERE m.mid={mission_id} RETURN DISTINCT m;',
+                         'WHERE m.mid=$mission_id RETURN DISTINCT m;',
                          mission_id=mission_id)
 
     mission = {}

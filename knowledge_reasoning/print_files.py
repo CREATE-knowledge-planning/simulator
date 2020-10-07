@@ -1,11 +1,9 @@
-import os
 from pathlib import Path
 import shutil
 
-from neo4j import GraphDatabase
-
 from kg_access.mission import get_observedproperty_relations, get_requires_relations, get_mission_information, \
     get_haslocation_relations
+from kg_access.obtain_driver import get_neo4j_driver
 from kg_access.satellites import get_all_active_satellites_with_instruments, \
     get_sensortype_relations, get_sensorband_relations, get_typeobserves_relations, get_sensorrule_relations, \
     retrieve_available_satellites, get_observes_relationships
@@ -16,8 +14,7 @@ def print_kg_reasoning_files(mission_id, access_intervals, simulation_path):
     # dictionary
 
     # Connect to database, open session
-    uri = "bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+    driver = get_neo4j_driver()
 
     entities = set()
     relations = set()

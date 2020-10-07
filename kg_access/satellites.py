@@ -7,7 +7,7 @@ def retrieve_instrument_accuracies(sensor_name, session):
     # Query the KG for sensors in satellite
     result = session.run(
         'MATCH (s:Sensor)-[ro:OBSERVES]-(op:ObservableProperty) '
-        'WHERE s.name={name} RETURN DISTINCT ro, op;',
+        'WHERE s.name=$name RETURN DISTINCT ro, op;',
         name=sensor_name)
 
     accuracies = {}
@@ -30,7 +30,7 @@ def retrieve_instrument_characteristics(sensor_name, session):
     # Query the KG for sensors in satellite
     result = session.run(
         'MATCH (s:Sensor)-[ro:OBSERVES]-(op:ObservableProperty) '
-        'WHERE s.name={name} RETURN DISTINCT ro, op;',
+        'WHERE s.name=$name RETURN DISTINCT ro, op;',
         name=sensor_name)
 
     # TODO: Fill these from real data for each sensor
@@ -100,7 +100,7 @@ def retrieve_valid_instruments(platform_name, session):
     # Query the KG for sensors in satellite
     sensor_result = session.run(
         'MATCH (p:Platform)--(s:Sensor) '
-        'WHERE p.name={name} RETURN DISTINCT s;',
+        'WHERE p.name=$name RETURN DISTINCT s;',
         name=platform_name)
 
     sensors = []
@@ -155,7 +155,7 @@ def retrieve_valid_instruments(platform_name, session):
 def retrieve_available_satellites(mission_id, session):
     """Retrieve satellites available for the requested mission, together with information on the sensors they carry"""
     result = session.run('MATCH (p:Platform)--(s:Sensor)--(op:ObservableProperty)--(ob:Observation)--(m:Mission) '
-                         'WHERE m.mid={mission_id} AND p.status="Currently being flown" RETURN DISTINCT p;',
+                         'WHERE m.mid=$mission_id AND p.status="Currently being flown" RETURN DISTINCT p;',
                          mission_id=mission_id)
     satellites = []
     for record in result:

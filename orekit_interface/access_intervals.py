@@ -8,9 +8,10 @@ from json import JSONEncoder
 
 import requests
 from neo4j import GraphDatabase
-from neotime import DateTime
+from neo4j.time import DateTime
 
 from kg_access.mission import get_mission_information
+from kg_access.obtain_driver import get_neo4j_driver
 from kg_access.satellites import retrieve_available_satellites
 
 
@@ -63,8 +64,7 @@ def print_orekit_info(satellites, mission):
 
 def obtain_access_times(mission_id):
     # Connect to database, open session
-    uri = "bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+    driver = get_neo4j_driver()
 
     with driver.session() as session:
         # 1. Obtain a list of satellites that can participate in the mission from the Knowledge Graph
@@ -74,11 +74,12 @@ def obtain_access_times(mission_id):
         # 3. Get mission information
         mission = get_mission_information(mission_id, session)
         # 4. Save all required information on a file for Orekit:
+        print(mission)
         print_orekit_info(satellites, mission)
 
     driver.close()
     # 5. Call Orekit and wait for the results before continuing
-    jar_path = Path("./jar_files/propagator.jar")
+    jar_path = Path(os.environ.get("PROPAGATOR_JAR", "./jar_files/propagator.jar"))
     orekit_process = subprocess.run(["java", "-jar", str(jar_path)], cwd=os.getcwd())
 
     # 5. Read Orekit results from file and put them into the right format for this code

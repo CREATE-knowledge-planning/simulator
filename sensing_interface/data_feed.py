@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 from neo4j import GraphDatabase
+from kg_access.obtain_driver import get_neo4j_driver
 
 from kg_access.satellites import retrieve_available_satellites
 from mission_creation.kg_additions import add_volcano_mission
@@ -160,8 +161,7 @@ def generate_simulation(mission_id, access_intervals, eruption_length, eruption_
     }
 
     # Connect to database, open session
-    uri = "bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+    driver = get_neo4j_driver()
 
     with driver.session() as session:
         satellites = retrieve_available_satellites(mission_id, session)

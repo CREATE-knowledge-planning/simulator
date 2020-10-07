@@ -1,25 +1,26 @@
 from datetime import datetime, timedelta
+import os
 
 from neo4j import GraphDatabase
 
+from kg_access.obtain_driver import get_neo4j_driver
+
 
 def clear_kg():
-    uri = "bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+    driver = get_neo4j_driver()
 
     with driver.session() as session:
         summary = session.run('MATCH (m:Mission), (obs:Observation), (l:Location) '
-                              'DETACH DELETE m, obs, l').summary()
+                              'DETACH DELETE m, obs, l').consume()
         print(summary.counters)
 
 
 def add_volcano_locations():
-    uri = "bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+    driver = get_neo4j_driver()
 
     with driver.session() as session:
         def create_volcano(tx, name, lat, lon):
-            tx.run("CREATE (l1:Location {name: {name}, latitude: {lat}, longitude: {lon}})",
+            tx.run("CREATE (l1:Location {name: $name, latitude: $lat, longitude: $lon})",
                    name=name, lat=lat, lon=lon)
 
         # Add locations where measurements need to be made
@@ -36,8 +37,7 @@ def add_volcano_locations():
 
 
 def add_volcano_mission(location):
-    uri = "bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+    driver = get_neo4j_driver()
 
     with driver.session() as session:
         # Count number of missions to get ID
@@ -46,11 +46,11 @@ def add_volcano_mission(location):
 
         # Create a sample mission
         mission_id = mission_count + 1
-        summary = session.run('CREATE (m:Mission {mid: {mission_id}, name: {name}, description: {description}})',
+        summary = session.run('CREATE (m:Mission {mid: $mission_id, name: $name, description: $description})',
                               mission_id=mission_id,
                               name=f"Mission {mission_id} - Active Volcano Monitoring",
                               description='We want to monitor volcano eruptions in the Pacific Ring of Fire during the '
-                                          'next month. Which satellites should we redirect to detect these?').summary()
+                                          'next month. Which satellites should we redirect to detect these?').consume()
         print(summary.counters)
 
         # Add the observations that need to be measured
@@ -60,12 +60,12 @@ def add_volcano_mission(location):
                               '(op4:ObservableProperty), (op5:ObservableProperty), (m:Mission) '
                               'WHERE op1.name = "Land surface temperature" AND op2.name = "Fire temperature" AND '
                               'op3.name = "Cloud type" AND op4.name = "Land surface topography" AND '
-                              'op5.name = "Atmospheric Chemistry - SO2 (column/profile)" AND m.mid = {mission_id} '
-                              'CREATE (o1:Observation {name: {name1}, startDate: {start_date}, endDate: {end_date}, accuracy: {acc1}}), '
-                              '(o2:Observation {name: {name2}, startDate: {start_date}, endDate: {end_date}, accuracy: {acc2}}), '
-                              '(o3:Observation {name: {name3}, startDate: {start_date}, endDate: {end_date}, accuracy: {acc3}}), '
-                              '(o4:Observation {name: {name4}, startDate: {start_date}, endDate: {end_date}, accuracy: {acc4}}), '
-                              '(o5:Observation {name: {name5}, startDate: {start_date}, endDate: {end_date}, accuracy: {acc5}}), '
+                              'op5.name = "Atmospheric Chemistry - SO2 (column/profile)" AND m.mid = $mission_id '
+                              'CREATE (o1:Observation {name: $name1, startDate: $start_date, endDate: $end_date, accuracy: $acc1}), '
+                              '(o2:Observation {name: $name2, startDate: $start_date, endDate: $end_date, accuracy: $acc2}), '
+                              '(o3:Observation {name: $name3, startDate: $start_date, endDate: $end_date, accuracy: $acc3}), '
+                              '(o4:Observation {name: $name4, startDate: $start_date, endDate: $end_date, accuracy: $acc4}), '
+                              '(o5:Observation {name: $name5, startDate: $start_date, endDate: $end_date, accuracy: $acc5}), '
                               '(m)-[:REQUIRES]->(o1), (m)-[:REQUIRES]->(o2), (m)-[:REQUIRES]->(o3), '
                               '(m)-[:REQUIRES]->(o4), (m)-[:REQUIRES]->(o5), '
                               '(o1)-[:OBSERVEDPROPERTY]->(op1), (o2)-[:OBSERVEDPROPERTY]->(op2), '
@@ -84,15 +84,15 @@ def add_volcano_mission(location):
                               acc4='10 cm',
                               name5='M1 - Volcano Gases',
                               acc5='0.1'
-                              ).summary()
+                              ).consume()
         print(summary.counters)
 
         summary = session.run('MATCH (m:Mission), (l:Location) '
-                              'WHERE m.mid = {mission_id} AND l.name = {location} '
+                              'WHERE m.mid = $mission_id AND l.name = $location '
                               'CREATE (m)-[:HASLOCATION]->(l)',
                               mission_id=mission_id,
                               location=location
-                              ).summary()
+                              ).consume()
 
         print(summary.counters)
 

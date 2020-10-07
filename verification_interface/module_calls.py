@@ -3,14 +3,15 @@ from pathlib import Path
 import random
 import copy
 
-from neo4j import GraphDatabase
 from numpy.core.numeric import inf
 from kg_access.mission import get_mission_information
 from verification.encodeMission import find_mission_length, generate_mission_multi
-from verification.extractJSON import construct_as_matrix, construct_ms_matrix, find_time_bounds, generate_asm_lists, generate_team_time_id, load_entity_dict, not_meas_mat
+from verification.extractJSON import construct_as_matrix, construct_ms_matrix, find_time_bounds, generate_asm_lists, generate_team_time_id, not_meas_mat
 from verification.generate_MDP_pruned import action2str, all_states_asm, all_states_as, construct_num_agents_cost, construct_kg_module, replace_idx, save_mdp_file
 from verification.main import call_prism, check_time, construct_team_from_list, output_adv, output_result
 from verification.parseADV import parse_adv_main
+
+from kg_access.obtain_driver import get_neo4j_driver
 
 
 def random_team_choice(team, num_agents):
@@ -18,16 +19,32 @@ def random_team_choice(team, num_agents):
     return new_team
 
 
+def retrieve_entity_dict(driver):
+    with driver.session() as session:
+        result = session.run('MATCH (n) RETURN n;')
+        entity_dict = {}
+        inv_entity_dict = {}
+    
+        for record in result:
+            node_type = list(record["n"].labels)[0]
+            node_id = record["n"].id
+            node_name = record["n"]["name"]
+            entity_dict[node_name] = f"{node_type}{node_id}"
+            inv_entity_dict[f"{node_type}{node_id}"] = node_name
+    return entity_dict, inv_entity_dict
+
+
 def run_verification(original_team, simulation_path, simulation_info, access_intervals):
     # data from knowledge graph
-    uri = "bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
+    driver = get_neo4j_driver()
 
     # Save kg with names first, at the end substitute for indices
     with driver.session() as session:
         mission_info = get_mission_information(simulation_info["mission_id"], session)
-    path_to_dict = Path('./int_files/output.dict')
-    prism_path = Path('D:/Dropbox/darpa_grant/prism/prism/bin')      
+    path_to_dict = Path('./int_files/output.dict')   
+    prism_path = Path(os.environ.get("PRISM_PATH", 'D:/Dropbox/darpa_grant/prism/prism/bin'))
+    print(prism_path)
+    prism_wsl = (os.environ.get("PRISM_WSL", "yes") == "yes")   
 
     # name of files for PRISM (saved to current directory)
     mission_file = simulation_path / "prop1.txt"             # specification
@@ -40,7 +57,7 @@ def run_verification(original_team, simulation_path, simulation_info, access_int
     output_file = output_file.resolve()
 
     # Iterate teams until we have a manageable number of states (~1000)
-    entity_dict, inv_entity_dict = load_entity_dict(path_to_dict)
+    entity_dict, inv_entity_dict = retrieve_entity_dict(driver)
     num_states = inf
     base_team = copy.deepcopy(original_team)
     num_agents = 7
@@ -92,10 +109,10 @@ def run_verification(original_team, simulation_path, simulation_info, access_int
     save_mdp_file(modules, mdp_file)
 
     # save PRISM files to current directory
-    call_prism(mdp_file, mission_file, output_file, prism_path, wsl=True)
+    call_prism(mdp_file, mission_file, output_file, prism_path, wsl=prism_wsl)
     result = output_result(output_file)
     
-    output_adv(mdp_file, mission_file, prism_path, simulation_path, wsl=True)
+    output_adv(mdp_file, mission_file, prism_path, simulation_path, wsl=prism_wsl)
 
     print('\n ===================== PARETO FRONT POINTS ===================== ')
     print(result)
