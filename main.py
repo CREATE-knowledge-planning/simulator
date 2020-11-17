@@ -57,9 +57,9 @@ def main():
     # 4. Call the Knowledge Reasoning
     print_kg_reasoning_files(1, access_intervals)
     # Train the model
-    train_uniker()
+    final_path = train_uniker()
     # Perform inference
-    satellite_list = forward_chain()
+    satellite_list = merge_results(final_path)
 
     # 5. Call the Sensing Framework
     generate_fake_data(1, access_intervals)
