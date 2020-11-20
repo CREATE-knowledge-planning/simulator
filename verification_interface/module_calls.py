@@ -2,14 +2,15 @@ import os
 from pathlib import Path
 import random
 import copy
+import multiprocessing as mp
 
 from numpy.core.numeric import inf
 from kg_access.mission import get_mission_information
-from verification.encodeMission import find_mission_length, generate_mission_multi
-from verification.extractJSON import construct_as_matrix, construct_ms_matrix, find_time_bounds, generate_asm_lists, generate_team_time_id, not_meas_mat
-from verification.generate_MDP_pruned import action2str, all_states_asm, all_states_as, construct_num_agents_cost, construct_kg_module, replace_idx, save_mdp_file
-from verification.main import call_prism, check_time, construct_team_from_list, output_adv, output_result
-from verification.parseADV import parse_adv_main
+from verification.encodeMission import find_mission_length
+from verification.extractJSON import construct_as_matrix, find_time_bounds, generate_asm_lists, generate_team_time_id
+from verification.generate_MDP_pruned import all_states_as
+from verification.main import check_time, construct_team_from_list, main_parallelized, team_per_timestep
+from verification.parseADV import pareto_plot_all
 
 from kg_access.obtain_driver import get_neo4j_driver
 
@@ -34,7 +35,7 @@ def retrieve_entity_dict(driver):
     return entity_dict, inv_entity_dict
 
 
-def run_verification(original_team, simulation_path, simulation_info, access_intervals):
+def run_verification(original_team, simulation_path: Path, simulation_info, access_intervals):
     # data from knowledge graph
     driver = get_neo4j_driver()
 
@@ -44,17 +45,16 @@ def run_verification(original_team, simulation_path, simulation_info, access_int
     path_to_dict = Path('./int_files/output.dict')   
     prism_path = Path(os.environ.get("PRISM_PATH", 'D:/Dropbox/darpa_grant/prism/prism/bin'))
     print(prism_path)
-    prism_wsl = (os.environ.get("PRISM_WSL", "yes") == "yes")   
+    prism_wsl = (os.environ.get("PRISM_WSL", "yes") == "yes")
 
     # name of files for PRISM (saved to current directory)
     mission_file = simulation_path / "prop1.txt"             # specification
-    mdp_file = simulation_path / "KG_MDP1.txt"                   # MDP
-    output_file = simulation_path / "output1.txt"            # output log
+    mdp_filename = "KG_MDP1.txt"                   # MDP
+    output_filename = "output1.txt"            # output log
 
     # Make paths absolute
     mission_file = mission_file.resolve()
-    mdp_file = mdp_file.resolve()
-    output_file = output_file.resolve()
+    simulation_path = simulation_path.resolve()
 
     # Iterate teams until we have a manageable number of states (~1000)
     entity_dict, inv_entity_dict = retrieve_entity_dict(driver)
@@ -62,6 +62,8 @@ def run_verification(original_team, simulation_path, simulation_info, access_int
     base_team = copy.deepcopy(original_team)
     num_agents = 7
     while num_states > 1000:
+        mission_length = find_mission_length(mission_info)
+
         base_team = random_team_choice(base_team, num_agents)
         team = construct_team_from_list(base_team)
         target = simulation_info["location"]
@@ -78,16 +80,8 @@ def run_verification(original_team, simulation_path, simulation_info, access_int
 
         check_time(team, team_time_id, m_list, entity_dict, s_prefix, m_prefix)
 
-        # mission for PRISM
-        reward_list = ['numAgents']
-        mission_length = find_mission_length(mission_info)
-        mission_pctl = generate_mission_multi(m_list, mission_file, reward_list, save_file=True)
-        
         # relationship matrices
         relation_as = construct_as_matrix(team, entity_dict, num_a, num_s, a_prefix, s_prefix, a_list, s_list)
-        relation_ms = construct_ms_matrix(team, entity_dict, num_m, num_s, m_prefix, s_prefix, m_list, s_list)
-        
-        relation_ms_no, prob_dict = not_meas_mat(team, entity_dict, relation_ms, num_m, num_s, m_prefix, s_prefix, m_list, s_list)
 
         # modules for PRISM MDP
         all_states = all_states_as(num_a, num_s, relation_as, a_list, s_list, team_time_id)
@@ -95,28 +89,30 @@ def run_verification(original_team, simulation_path, simulation_info, access_int
         print(f"Num agents: {num_agents}; Num states: {num_states}")
         num_agents -= 1
 
-    all_states_dict = all_states_asm(num_asm, relation_as, relation_ms_no, all_states, prob_dict)
-    actions, time_dict = action2str(num_a, num_s, team_time, all_states, a_prefix, s_prefix, a_list, s_list, inv_entity_dict)
+    def parallelize(i, q):
+        teamUpd = team_per_timestep(team, team_time, i)
+        q.put(main_parallelized(entity_dict, inv_entity_dict, mission_file, mdp_filename, output_filename, simulation_path, prism_path, teamUpd, i))
 
-    kg_module = construct_kg_module(actions, time_dict, all_states_dict, num_asm, prefix_list, a_list, s_list, team_time, relation_as, relation_ms, prob_dict, entity_dict, mission_length)
+    qout = mp.Queue()
+    processes = [mp.Process(target=parallelize, args=(i, qout)) for i in range(mission_length)]
+    for p in processes:
+        p.start()
 
-    rewards_name = reward_list[0]    # criteria we care about
-    rewards_module1 = construct_num_agents_cost(num_a, num_s, team_time, all_states, a_prefix, s_prefix, a_list, s_list, m_list, inv_entity_dict, rewards_name)
-    # rewards_module2 = constructEachPModule(num_a, num_s, num_m,a_list, s_list,teamTime, teamTimeID, relation_as, relation_ms_no,a_prefix, s_prefix, m_prefix, probDict, pathToDict)
-    kg_module, rewards_module1 = replace_idx(a_list, s_list, m_list, kg_module, rewards_module1)
+    for p in processes:
+        p.join()
 
-    modules = [kg_module, rewards_module1]
-    save_mdp_file(modules, mdp_file)
+    result = []
+    teaming = []
+    for p in processes:
+        result_p, teaming_p = qout.get()
+        result.append(result_p)
+        teaming.append(teaming_p)
 
-    # save PRISM files to current directory
-    call_prism(mdp_file, mission_file, output_file, prism_path, wsl=prism_wsl)
-    result = output_result(output_file)
-    
-    output_adv(mdp_file, mission_file, prism_path, simulation_path, wsl=prism_wsl)
+    # merge all teaming dictionaries into one
+    teams = {k: v for d in teaming for k, v in d.items()}
 
-    print('\n ===================== PARETO FRONT POINTS ===================== ')
-    print(result)
-    print('\n ===================== POSSIBLE TEAMS ===================== ')
-    teams = parse_adv_main(inv_entity_dict, simulation_path)
-    team_prob, team = max(teams.items(), key=lambda kv_pair: kv_pair[0][0])
-    return team_prob[0], team
+    optimal_teaming = pareto_plot_all(result, teams)
+    print('\n ===================== OPTIMAL TEAM ===================== ')
+    print(optimal_teaming)
+
+    return optimal_teaming

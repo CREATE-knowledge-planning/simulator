@@ -186,6 +186,7 @@ def generate_simulation(mission_id, access_intervals, eruption_length, eruption_
                                 #     np.save(f, data_array)
                                 print(observation_name)
 
+    observable_properties = ["Land surface temperature", "Fire temperature", "Cloud type" , "Land surface topography", "Atmospheric Chemistry - SO2 (column/profile)"]
     with simulation_information_path.open('w', encoding='utf8') as simulation_information_file:
         simulation_information_json = {
             "mission_id": mission_id,
@@ -199,7 +200,8 @@ def generate_simulation(mission_id, access_intervals, eruption_length, eruption_
             "max_ash_cloud": max_ash_cloud,
             "max_terrain_displacement": max_terrain_displacement,
             "max_so2_levels": max_so2_levels,
-            "data_locations": data_locations_json
+            "data_locations": data_locations_json,
+            "observable_properties": observable_properties
         }
         json.dump(simulation_information_json, simulation_information_file)
 
