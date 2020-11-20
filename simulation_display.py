@@ -7,7 +7,7 @@ from neo4j import GraphDatabase
 import numpy as np
 from kg_access.obtain_driver import get_neo4j_driver
 from kg_access.satellites import get_sensors_from_satellite_list
-from knowledge_reasoning.module_calls import forward_chain
+from knowledge_reasoning.module_calls import merge_results, train_uniker
 
 from knowledge_reasoning.print_files import print_kg_reasoning_files
 from mission_creation.kg_additions import clear_kg, add_volcano_mission, add_volcano_locations
@@ -181,7 +181,8 @@ def compute_probabilities():
         mission_id = simulation_info["mission_id"]
         access_intervals = read_access_times(location)
         print_kg_reasoning_files(mission_id, access_intervals, simulation_path)
-        satellite_list = forward_chain(simulation_path)
+        final_path = train_uniker(simulation_path)
+        satellite_list = merge_results(final_path)
 
         driver = get_neo4j_driver()
         with driver.session() as session:

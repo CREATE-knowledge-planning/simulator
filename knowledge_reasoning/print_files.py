@@ -1,3 +1,4 @@
+from genericpath import exists
 from pathlib import Path
 import shutil
 
@@ -9,7 +10,7 @@ from kg_access.satellites import get_all_active_satellites_with_instruments, \
     retrieve_available_satellites, get_observes_relationships
 
 
-def print_kg_reasoning_files(mission_id, access_intervals, simulation_path):
+def print_kg_reasoning_files(mission_id, access_intervals, simulation_path: Path):
     # Generate the Knowledge Base relationship by relationship, saving the entities in a set to later generate the
     # dictionary
 
@@ -155,8 +156,9 @@ def print_kg_reasoning_files(mission_id, access_intervals, simulation_path):
     src_rules_path = Path("./knowledge_reasoning/MLN_rule.txt")
     dst_rules_path = simulation_path / "MLN_rule.txt"
     shutil.copy(src_rules_path, dst_rules_path)
-    shutil.copy(Path("./knowledge_reasoning/fc_observation.txt"), simulation_path / "fc_observation.txt")
-    shutil.copy(Path("./knowledge_reasoning/fc_visibility.txt"), simulation_path / "fc_visibility.txt")
+    (simulation_path / "final_rules").mkdir(exist_ok=True)
+    shutil.copy(Path("./knowledge_reasoning/fc_observation.txt"), simulation_path / "final_rules" / "fc_observation.txt")
+    shutil.copy(Path("./knowledge_reasoning/fc_visibility.txt"), simulation_path / "final_rules" / "fc_visibility.txt")
 
     # Print a ground truth with the set of satellites we know have a chance of participating at all
     ground_truth_path = simulation_path / "test.txt"

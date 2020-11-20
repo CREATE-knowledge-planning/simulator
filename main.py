@@ -1,5 +1,5 @@
 from http_server.server_functions import open_local_http_server
-from knowledge_reasoning.module_calls import train_uniker, eval_uniker, forward_chain
+from knowledge_reasoning.module_calls import train_uniker
 from knowledge_reasoning.print_files import print_kg_reasoning_files
 from mission_creation.kg_additions import add_volcano_mission
 from orekit_interface.access_intervals import obtain_access_times

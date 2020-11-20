@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from uniker.kge.run import simulator_main
 from uniker.run import train
@@ -22,9 +23,8 @@ from uniker.run import train
 #          "--data_path", data_path])
 #     print("hey!")
 
-def train_uniker():
-    data_path = os.path.join(os.getcwd(), "int_files")
-    final_path = train(dataset = data_path ,cuda = 0 ,record_name = "models",kge_model = "TransE",iterations = 3 ,noise_threshold = 0.0,top_k_threshold = 0.2,is_init = 0)
+def train_uniker(simulation_path: Path):
+    final_path = train(data_folder=simulation_path, cuda=0, record_name="models", kge_model="TransE", iterations=3, noise_threshold=0.0, top_k_threshold=0.2, is_init=0)
     return final_path
 
 def merge_results(final_path):
