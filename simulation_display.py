@@ -2,6 +2,7 @@ import json
 import os
 import random
 from pathlib import Path
+import shutil
 
 from neo4j import GraphDatabase
 import numpy as np
@@ -70,7 +71,7 @@ def display_simulation_results(simulation_probabilities):
     cdf_text = cdf_info.text(0.05, 0.95, "", transform=cdf_info.transAxes, fontsize=12, verticalalignment='top')
 
     mng = plt.get_current_fig_manager()
-    mng.window.state('zoomed')  # works fine on Windows!
+    #mng.window.state('zoomed')  # works fine on Windows!
     plt.show()
 
     path = geopandas.datasets.get_path('naturalearth_lowres')
@@ -94,7 +95,7 @@ def display_simulation_results(simulation_probabilities):
 
         with driver.session() as session:
             result = session.run('MATCH (l:Location) '
-                                 'WHERE l.name={name} RETURN DISTINCT l;',
+                                 'WHERE l.name=$name RETURN DISTINCT l;',
                                  name=simulation_info["location"])
             record = result.single()
             location_info = {
@@ -183,6 +184,7 @@ def compute_probabilities():
         print_kg_reasoning_files(mission_id, access_intervals, simulation_path)
         final_path = train_uniker(simulation_path)
         satellite_list = merge_results(final_path)
+        shutil.rmtree(simulation_path / "record", ignore_errors=True)
 
         driver = get_neo4j_driver()
         with driver.session() as session:
@@ -192,9 +194,9 @@ def compute_probabilities():
         with team_probs_info_path.open('w') as team_probs_info_file:
             json.dump(team, team_probs_info_file)
 
-        max_prob, final_team = run_verification(team, simulation_path, simulation_info, access_intervals)
+        optimal_teams = run_verification(team, simulation_path, simulation_info, access_intervals)
 
-        simulation_probabilities["Full Pipeline"].append(max_prob)
+        simulation_probabilities["Full Pipeline"].append(optimal_teams)
 
         # Method 2
 
@@ -216,11 +218,11 @@ def main():
     # This is the main process from mission to list of participating satellites
 
     # 1. Clear the KG for a new simulation run
-    clear_kg()
-    add_volcano_locations()
+    #clear_kg()
+    #add_volcano_locations()
 
     # 2. Generate 100 simulations
-    generate_simulations(100, 0.5)
+    #generate_simulations(10, 0.5)
 
     # 3. Compute the success probabilities for each approach and simulation
     simulation_probabilities = compute_probabilities()

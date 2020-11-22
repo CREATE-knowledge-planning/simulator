@@ -7,7 +7,7 @@ import multiprocessing as mp
 from numpy.core.numeric import inf
 from kg_access.mission import get_mission_information
 from verification.encodeMission import find_mission_length
-from verification.extractJSON import construct_as_matrix, find_time_bounds, generate_asm_lists, generate_team_time_id
+from verification.extractJSON import construct_as_matrix, find_time_bounds, generate_as_lists, generate_m_list, generate_team_time_id
 from verification.generate_MDP_pruned import all_states_as
 from verification.main import check_time, construct_team_from_list, main_parallelized, team_per_timestep
 from verification.parseADV import pareto_plot_all
@@ -34,6 +34,9 @@ def retrieve_entity_dict(driver):
             inv_entity_dict[f"{node_type}{node_id}"] = node_name
     return entity_dict, inv_entity_dict
 
+def parallelize(team, team_time, entity_dict, inv_entity_dict, mission_file, mdp_filename, output_filename, simulation_path, prism_path, m_list, prefix_list, i, q, prism_wsl):
+    teamUpd = team_per_timestep(team, team_time, i)
+    q.put(main_parallelized(entity_dict, inv_entity_dict, mission_file, mdp_filename, output_filename, simulation_path, prism_path, teamUpd, m_list, prefix_list, i, prism_wsl))
 
 def run_verification(original_team, simulation_path: Path, simulation_info, access_intervals):
     # data from knowledge graph
@@ -60,8 +63,8 @@ def run_verification(original_team, simulation_path: Path, simulation_info, acce
     entity_dict, inv_entity_dict = retrieve_entity_dict(driver)
     num_states = inf
     base_team = copy.deepcopy(original_team)
-    num_agents = 7
-    while num_states > 1000:
+    num_agents = 10
+    while num_states > 4000:
         mission_length = find_mission_length(mission_info)
 
         base_team = random_team_choice(base_team, num_agents)
@@ -73,7 +76,8 @@ def run_verification(original_team, simulation_path: Path, simulation_info, acce
         a_prefix, s_prefix, m_prefix = prefix_list
         team_time_id = generate_team_time_id(entity_dict, team_time, a_prefix, s_prefix)
         
-        a_list, s_list, m_list = generate_asm_lists(team, entity_dict, a_prefix, s_prefix, m_prefix)
+        a_list, s_list = generate_as_lists(team, entity_dict, a_prefix, s_prefix)
+        m_list = generate_m_list(team, simulation_path / "simulation_information.json", entity_dict, prefix_list[2])
         num_asm = [len(a_list), len(s_list), len(m_list)]
         num_a, num_s, num_m = num_asm
         print('# of agents, sensors, meas: ', num_asm)
@@ -88,13 +92,12 @@ def run_verification(original_team, simulation_path: Path, simulation_info, acce
         num_states = len(all_states)    # total number of states
         print(f"Num agents: {num_agents}; Num states: {num_states}")
         num_agents -= 1
-
-    def parallelize(i, q):
-        teamUpd = team_per_timestep(team, team_time, i)
-        q.put(main_parallelized(entity_dict, inv_entity_dict, mission_file, mdp_filename, output_filename, simulation_path, prism_path, teamUpd, i))
+    
+    prefix_list = ['a', 's', 'm']
+    m_list = generate_m_list(team, simulation_path / "simulation_information.json", entity_dict, prefix_list[2])
 
     qout = mp.Queue()
-    processes = [mp.Process(target=parallelize, args=(i, qout)) for i in range(mission_length)]
+    processes = [mp.Process(target=parallelize, args=(team, team_time, entity_dict, inv_entity_dict, mission_file, mdp_filename, output_filename, simulation_path, prism_path, m_list, prefix_list, i, qout, prism_wsl)) for i in range(mission_length)]
     for p in processes:
         p.start()
 
@@ -113,6 +116,6 @@ def run_verification(original_team, simulation_path: Path, simulation_info, acce
 
     optimal_teaming = pareto_plot_all(result, teams)
     print('\n ===================== OPTIMAL TEAM ===================== ')
-    print(optimal_teaming)
+    print(teams, optimal_teaming)
 
     return optimal_teaming

@@ -1,5 +1,6 @@
 from genericpath import exists
 from pathlib import Path
+import random
 import shutil
 
 from kg_access.mission import get_observedproperty_relations, get_requires_relations, get_mission_information, \
@@ -148,9 +149,14 @@ def print_kg_reasoning_files(mission_id, access_intervals, simulation_path: Path
 
     # Print the knowledge base into a file
     kg_path = simulation_path / "train.txt"
-    with kg_path.open('w', encoding='utf8') as kg_file:
+    kg_val_path = simulation_path / "valid.txt"
+    train_val_split = 0.1
+    with kg_path.open('w', encoding='utf8') as kg_file, kg_val_path.open('w', encoding='utf8') as kg_val_file:
         for fact in kg:
-            kg_file.write(f'{fact["head"]}\t{fact["relationship"]}\t{fact["tail"]}\n')
+            if random.random() < train_val_split:
+                kg_val_file.write(f'{fact["head"]}\t{fact["relationship"]}\t{fact["tail"]}\n')
+            else:
+                kg_file.write(f'{fact["head"]}\t{fact["relationship"]}\t{fact["tail"]}\n')
 
     # Print a file with the logic rules
     src_rules_path = Path("./knowledge_reasoning/MLN_rule.txt")
