@@ -89,7 +89,7 @@ def retrieve_instrument_characteristics(sensor_name, session):
 
 def retrieve_valid_instruments(platform_name, session):
     """Retrieve information of the sensors in a platform"""
-    instrument_conical_geometries = ['Conical scanning']
+    instrument_conical_geometries = ['Conical scanning', 'Earth disk scanning']
     instrument_rectangular_geometries = ['Cross-track scanning',
                                          'Nadir-viewing',
                                          'Push-broom scanning',

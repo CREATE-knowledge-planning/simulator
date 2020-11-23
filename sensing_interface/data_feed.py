@@ -178,15 +178,15 @@ def generate_simulation(mission_id, access_intervals, eruption_length, eruption_
                                 observation_name = slugify(satellite["name"] + "__" + instrument["name"] + "__" + location + "__" + observation)
                                 data_locations_json[satellite["name"]][instrument["name"]][observation][location] = observation_name + ".npy"
                                 array_path = data_streams_path / f"{observation_name}.npy"
-                                time_array, data_array = generate_fake_timeline(instrument["characteristics"][observation]["Q"],
-                                                                                access_intervals["output"][satellite["name"]][instrument["name"]][location],
-                                                                                fake_data_generators[location][observation])
+                                #time_array, data_array = generate_fake_timeline(instrument["characteristics"][observation]["Q"],
+                                #                                                access_intervals["output"][satellite["name"]][instrument["name"]][location],
+                                #                                                fake_data_generators[location][observation])
                                 # with open(array_path, 'wb') as f:
                                 #     np.save(f, time_array)
                                 #     np.save(f, data_array)
                                 print(observation_name)
 
-    observable_properties = ["Land surface temperature", "Fire temperature", "Cloud type" , "Land surface topography", "Atmospheric Chemistry - SO2 (column/profile)"]
+    observable_properties = ["Land surface temperature", "Fire temperature", "Cloud type" , "Land surface topography"]
     with simulation_information_path.open('w', encoding='utf8') as simulation_information_file:
         simulation_information_json = {
             "mission_id": mission_id,

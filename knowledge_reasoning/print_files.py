@@ -154,6 +154,7 @@ def print_kg_reasoning_files(mission_id, access_intervals, simulation_path: Path
     with kg_path.open('w', encoding='utf8') as kg_file, kg_val_path.open('w', encoding='utf8') as kg_val_file:
         for fact in kg:
             if random.random() < train_val_split:
+                kg_file.write(f'{fact["head"]}\t{fact["relationship"]}\t{fact["tail"]}\n')
                 kg_val_file.write(f'{fact["head"]}\t{fact["relationship"]}\t{fact["tail"]}\n')
             else:
                 kg_file.write(f'{fact["head"]}\t{fact["relationship"]}\t{fact["tail"]}\n')

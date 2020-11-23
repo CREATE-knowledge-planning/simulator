@@ -23,7 +23,7 @@ from uniker.run import train
 #     print("hey!")
 
 def train_uniker(simulation_path: Path):
-    final_path = train(data_folder=simulation_path, cuda="0", record_name="create", kge_model="TransE", iterations=3, noise_threshold=0.0, top_k_threshold=0.2, is_init=0)
+    final_path = train(data_folder=simulation_path, cuda="0", record_name="create", kge_model="TransE", iterations=0, noise_threshold=0.0, top_k_threshold=0.2, is_init=0)
     return final_path
 
 def merge_results(final_path: Path):

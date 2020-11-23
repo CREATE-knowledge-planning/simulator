@@ -34,9 +34,21 @@ def retrieve_entity_dict(driver):
             inv_entity_dict[f"{node_type}{node_id}"] = node_name
     return entity_dict, inv_entity_dict
 
+
+def amy_team(team, param):
+    new_team = {}
+    for agent in team:
+        new_sensors = {}
+        for sensor in agent["sensors"]:
+            new_sensors[sensor["name"]] = sensor[param]
+        new_team[agent["name"]] = new_sensors
+    return new_team
+
+
 def parallelize(team, team_time, entity_dict, inv_entity_dict, mission_file, mdp_filename, output_filename, simulation_path, prism_path, m_list, prefix_list, i, q, prism_wsl):
     teamUpd = team_per_timestep(team, team_time, i)
     q.put(main_parallelized(entity_dict, inv_entity_dict, mission_file, mdp_filename, output_filename, simulation_path, prism_path, teamUpd, m_list, prefix_list, i, prism_wsl))
+
 
 def run_verification(original_team, simulation_path: Path, simulation_info, access_intervals):
     # data from knowledge graph
@@ -63,8 +75,8 @@ def run_verification(original_team, simulation_path: Path, simulation_info, acce
     entity_dict, inv_entity_dict = retrieve_entity_dict(driver)
     num_states = inf
     base_team = copy.deepcopy(original_team)
-    num_agents = 10
-    while num_states > 4000:
+    num_agents = 15
+    while num_states > 1000:
         mission_length = find_mission_length(mission_info)
 
         base_team = random_team_choice(base_team, num_agents)
@@ -81,6 +93,9 @@ def run_verification(original_team, simulation_path: Path, simulation_info, acce
         num_asm = [len(a_list), len(s_list), len(m_list)]
         num_a, num_s, num_m = num_asm
         print('# of agents, sensors, meas: ', num_asm)
+        if num_s > 16:
+            num_agents -= 1
+            continue
 
         check_time(team, team_time_id, m_list, entity_dict, s_prefix, m_prefix)
 
@@ -93,6 +108,8 @@ def run_verification(original_team, simulation_path: Path, simulation_info, acce
         print(f"Num agents: {num_agents}; Num states: {num_states}")
         num_agents -= 1
     
+    #print(amy_team(team, "probabilities"))
+    #print(amy_team(team, "times"))
     prefix_list = ['a', 's', 'm']
     m_list = generate_m_list(team, simulation_path / "simulation_information.json", entity_dict, prefix_list[2])
 
@@ -116,6 +133,7 @@ def run_verification(original_team, simulation_path: Path, simulation_info, acce
 
     optimal_teaming = pareto_plot_all(result, teams)
     print('\n ===================== OPTIMAL TEAM ===================== ')
-    print(teams, optimal_teaming)
+    #print(result, teams)
+    print(optimal_teaming)
 
     return optimal_teaming

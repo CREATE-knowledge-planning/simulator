@@ -57,20 +57,22 @@ def add_volcano_mission(location):
         now_time = datetime.now()
         month_time = now_time + timedelta(days=14)
         summary = session.run('MATCH (op1:ObservableProperty), (op2:ObservableProperty), (op3:ObservableProperty), '
-                              '(op4:ObservableProperty), (op5:ObservableProperty), (m:Mission) '
-                              'WHERE op1.name = "Land surface temperature" AND op2.name = "Fire temperature" AND '
-                              'op3.name = "Cloud type" AND op4.name = "Land surface topography" AND '
-                              'op5.name = "Atmospheric Chemistry - SO2 (column/profile)" AND m.mid = $mission_id '
+                              '(op4:ObservableProperty), (m:Mission) '
+                              'WHERE op1.name = "Land surface temperature" AND op2.name = "Fire temperature" '
+                              'AND op3.name = "Cloud type" AND op4.name = "Land surface topography" '
+                              #'AND op5.name = "Atmospheric Chemistry - SO2 (column/profile)" ' 
+                              'AND m.mid = $mission_id '
                               'CREATE (o1:Observation {name: $name1, startDate: $start_date, endDate: $end_date, accuracy: $acc1}), '
                               '(o2:Observation {name: $name2, startDate: $start_date, endDate: $end_date, accuracy: $acc2}), '
                               '(o3:Observation {name: $name3, startDate: $start_date, endDate: $end_date, accuracy: $acc3}), '
                               '(o4:Observation {name: $name4, startDate: $start_date, endDate: $end_date, accuracy: $acc4}), '
-                              '(o5:Observation {name: $name5, startDate: $start_date, endDate: $end_date, accuracy: $acc5}), '
+                              #'(o5:Observation {name: $name5, startDate: $start_date, endDate: $end_date, accuracy: $acc5}), '
                               '(m)-[:REQUIRES]->(o1), (m)-[:REQUIRES]->(o2), (m)-[:REQUIRES]->(o3), '
-                              '(m)-[:REQUIRES]->(o4), (m)-[:REQUIRES]->(o5), '
+                              '(m)-[:REQUIRES]->(o4), '
+                              #'(m)-[:REQUIRES]->(o5), '
                               '(o1)-[:OBSERVEDPROPERTY]->(op1), (o2)-[:OBSERVEDPROPERTY]->(op2), '
-                              '(o3)-[:OBSERVEDPROPERTY]->(op3), (o4)-[:OBSERVEDPROPERTY]->(op4), '
-                              '(o5)-[:OBSERVEDPROPERTY]->(op5)',
+                              '(o3)-[:OBSERVEDPROPERTY]->(op3), (o4)-[:OBSERVEDPROPERTY]->(op4) ',
+                              #'(o5)-[:OBSERVEDPROPERTY]->(op5)',
                               mission_id=mission_id,
                               start_date=now_time,
                               end_date=month_time,
@@ -82,8 +84,8 @@ def add_volcano_mission(location):
                               acc3='10 % confidence',
                               name4='M1 - Volcano Land Displacements',
                               acc4='10 cm',
-                              name5='M1 - Volcano Gases',
-                              acc5='0.1'
+                              #name5='M1 - Volcano Gases',
+                              #acc5='0.1'
                               ).consume()
         print(summary.counters)
 

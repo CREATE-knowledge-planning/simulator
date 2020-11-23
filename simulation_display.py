@@ -197,13 +197,18 @@ def compute_probabilities():
         optimal_teams = run_verification(team, simulation_path, simulation_info, access_intervals)
 
         simulation_probabilities["Full Pipeline"].append(optimal_teams)
+        simulation_results = paths / 'results.json'
+        with simulation_results.open('w') as simulation_res_file:
+            simulation_res_file.write(str(simulation_probabilities))
 
         # Method 2
 
         # ...
+    print(simulation_probabilities)
     simulation_results = paths / 'results.json'
     with simulation_results.open('w') as simulation_res_file:
-        json.dump(simulation_probabilities, simulation_res_file)
+        simulation_res_file.write(str(simulation_probabilities))
+        #json.dump(simulation_probabilities, simulation_res_file)
     return simulation_probabilities
 
 
@@ -218,11 +223,11 @@ def main():
     # This is the main process from mission to list of participating satellites
 
     # 1. Clear the KG for a new simulation run
-    #clear_kg()
-    #add_volcano_locations()
+    clear_kg()
+    add_volcano_locations()
 
     # 2. Generate 100 simulations
-    #generate_simulations(10, 0.5)
+    generate_simulations(50, 0.5)
 
     # 3. Compute the success probabilities for each approach and simulation
     simulation_probabilities = compute_probabilities()
