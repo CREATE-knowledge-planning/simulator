@@ -3,7 +3,7 @@ from E2Etest_1d.Sensor_planner import Sensor_planner
 
 
 def run_sensor_planner(satellite_list, simulation_info):
-    event_ts = [int(simulation_info["eruption_start"])]
+    event_ts = [int(simulation_info["start"])]
     uts = [0, 1]
     for platform in satellite_list:
         for sensor in platform["sensors"]:

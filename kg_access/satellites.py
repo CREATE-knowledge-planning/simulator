@@ -65,16 +65,79 @@ def retrieve_instrument_characteristics(sensor_name, session):
                 "H": {"c1": 0., "c2": 1.}
             }
             characteristics[observable] = obs_characteristics
-        elif observable == "Land surface topography":
-            obs_characteristics = {
-                "A": 1.,
-                "B": 1.,
-                "Q": 0.1,
-                "R": 0.1,
-                "H": {"c1": 0., "c2": 1.}
-            }
-            characteristics[observable] = obs_characteristics
-        elif observable == "Atmospheric Chemistry - SO2 (column/profile)":
+        # elif observable == "Land surface topography":
+        #     obs_characteristics = {
+        #         "A": 1.,
+        #         "B": 1.,
+        #         "Q": 0.1,
+        #         "R": 0.1,
+        #         "H": {"c1": 0., "c2": 1.}
+        #     }
+        #     characteristics[observable] = obs_characteristics
+        # elif observable == "Atmospheric Chemistry - SO2 (column/profile)":
+        #     obs_characteristics = {
+        #         "A": 1.,
+        #         "B": 1.,
+        #         "Q": 0.1,
+        #         "R": 1.,
+        #         "H": {"c1": 0., "c2": 1.}
+        #     }
+        #     characteristics[observable] = obs_characteristics
+        # if observable == "Wind speed over sea surface (horizontal)":
+        #     obs_characteristics = {
+        #         "A": 1.,
+        #         "B": 1.,
+        #         "Q": 0.03,
+        #         "R": 0.05,
+        #         "H": {"c1": 0., "c2": 1.}
+        #     }
+        #     characteristics[observable] = obs_characteristics
+        # elif observable == "Sea surface temperature":
+        #     obs_characteristics = {
+        #         "A": 1.,
+        #         "B": 1.,
+        #         "Q": 0.1,
+        #         "R": 1.,
+        #         "H": {"c1": 233., "c2": 6.67}
+        #     }
+        #     characteristics[observable] = obs_characteristics
+        # elif observable == "Cloud imagery":
+        #     obs_characteristics = {
+        #         "A": 1.,
+        #         "B": 1.,
+        #         "Q": 0.05,
+        #         "R": 0.01,
+        #         "H": {"c1": 0., "c2": 1.}
+        #     }
+        #     characteristics[observable] = obs_characteristics
+        # if observable == "Soil moisture at the surface":
+        #     obs_characteristics = {
+        #         "A": 1.,
+        #         "B": 1.,
+        #         "Q": 0.4,
+        #         "R": 0.6,
+        #         "H": {"c1": 0., "c2": 1.}
+        #     }
+        #     characteristics[observable] = obs_characteristics
+        # elif observable == "Precipitation Profile (liquid or solid)":
+        #     obs_characteristics = {
+        #         "A": 1.,
+        #         "B": 1.,
+        #         "Q": 0.1,
+        #         "R": 0.3,
+        #         "H": {"c1": 0., "c2": 1.}
+        #     }
+        #     characteristics[observable] = obs_characteristics
+        # elif observable == "Land surface imagery":
+        #     obs_characteristics = {
+        #         "A": 1.,
+        #         "B": 1.,
+        #         "Q": 0.01,
+        #         "R": 0.05,
+        #         "H": {"c1": 0., "c2": 1.}
+        #     }
+        #     characteristics[observable] = obs_characteristics
+        elif observable == "Trace gases (excluding ozone)":
             obs_characteristics = {
                 "A": 1.,
                 "B": 1.,

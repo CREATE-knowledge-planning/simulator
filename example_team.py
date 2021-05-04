@@ -31,7 +31,7 @@ def amy_team(team, param):
 
 
 def main():
-    simulation_path = Path('./int_files/simulations/simulation_4').resolve()
+    simulation_path = Path('./int_files/simulations/simulation_0').resolve()
     simulation_info_path = simulation_path / 'simulation_information.json'
     with simulation_info_path.open() as simulation_info_file:
         simulation_info = json.load(simulation_info_file)
@@ -94,18 +94,22 @@ def main():
 
     result = []
     teaming = []
+    times = []
     for p in processes:
-        result_p, teaming_p = qout.get()
+        result_p, teaming_p, time_dict = qout.get()
         result.append(result_p)
         teaming.append(teaming_p)
+        times.append(time_dict)
+
 
     # merge all teaming dictionaries into one
     teams = {k: v for d in teaming for k, v in d.items()}
+    timestep_dict = {k: v for d in times for k, v in d.items()}
 
-    optimal_teaming = pareto_plot_all(result, teams)
+    optimal_teaming = pareto_plot_all(result, teams, timestep_dict)
     print('\n ===================== OPTIMAL TEAM ===================== ')
-    #print(result, teams)
     print(optimal_teaming)
+    print(result)
 
 if __name__ == '__main__':
     main()

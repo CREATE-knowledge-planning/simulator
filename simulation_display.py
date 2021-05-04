@@ -4,15 +4,14 @@ import random
 from pathlib import Path
 import shutil
 
-from neo4j import GraphDatabase
 import numpy as np
 from kg_access.obtain_driver import get_neo4j_driver
 from kg_access.satellites import get_sensors_from_satellite_list
 from knowledge_reasoning.module_calls import merge_results, train_uniker
 
 from knowledge_reasoning.print_files import print_kg_reasoning_files
-from mission_creation.kg_additions import clear_kg, add_volcano_mission, add_volcano_locations
-from sensing_interface.data_feed import generate_simulations
+from mission_creation.kg_additions import add_flood_locations, add_forest_fire_locations, add_hurricane_locations, clear_kg, add_volcano_locations
+from sensing_interface.data_feed import generate_flood_simulations, generate_forest_fire_simulations, generate_hurricane_simulations, generate_volcano_simulations
 from orekit_interface.access_intervals import read_access_times
 # import Verification.main as vf_main
 
@@ -30,16 +29,11 @@ import geopandas
 
 def generate_simulation_text_info(simulation_info):
     textstr = '\n'.join([
-        f"Eruption length: {simulation_info['eruption_length']:.2f} hours",
-        f"Eruption start: {simulation_info['eruption_start']:.2f} hours",
+        f"Eruption length: {simulation_info['length']:.2f} hours",
+        f"Eruption start: {simulation_info['start']:.2f} hours",
         f"Location: {simulation_info['location']}",
-        f"Eruption Speed: {simulation_info['eruption_length']*simulation_info['speed']:.2f} hours",
+        f"Eruption Speed: {simulation_info['length']*simulation_info['speed']:.2f} hours",
         f"Eruption Size: {simulation_info['size']:.2f} m",
-        f"Max TIR: {simulation_info['max_tir_temperature']:.2f} W/m^2",
-        f"Max SWIR: {simulation_info['max_swir_temperature']:.2f} W/m^2",
-        f"Max Plume: {simulation_info['max_ash_cloud']:.2f}",
-        f"Max Displacement: {simulation_info['max_terrain_displacement']:.2f} mm",
-        f"Max SO2 aerosols: {simulation_info['max_so2_levels']:.2f} Dobson",
     ])
 
     return textstr
@@ -224,10 +218,15 @@ def main():
 
     # 1. Clear the KG for a new simulation run
     clear_kg()
-    add_volcano_locations()
+    #add_volcano_locations()
+    #add_hurricane_locations()
+    #add_flood_locations()
+    add_forest_fire_locations()
 
     # 2. Generate 100 simulations
-    generate_simulations(50, 0.5)
+    #generate_hurricane_simulations(50, 0.5)
+    #generate_flood_simulations(50, 0.5)
+    generate_forest_fire_simulations(50, 0.5)
 
     # 3. Compute the success probabilities for each approach and simulation
     simulation_probabilities = compute_probabilities()

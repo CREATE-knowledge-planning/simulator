@@ -85,7 +85,7 @@ def generate_num(state, rng, diff, length_slope, var):
         return 0.
 
 
-def generate_simulation(mission_id, access_intervals, eruption_length, eruption_start, location, speed, size,
+def generate_volcano_simulation(mission_id, access_intervals, eruption_length, eruption_start, location, speed, size,
                         max_tir_temperature, max_swir_temperature, max_ash_cloud, max_terrain_displacement,
                         max_so2_levels, simulation_information_path, data_streams_path):
     # For all data, we assume second-by-second collection for a week (24*7*3600 = 604800 data points)
@@ -190,8 +190,8 @@ def generate_simulation(mission_id, access_intervals, eruption_length, eruption_
     with simulation_information_path.open('w', encoding='utf8') as simulation_information_file:
         simulation_information_json = {
             "mission_id": mission_id,
-            "eruption_length": eruption_length,
-            "eruption_start": eruption_start,
+            "length": eruption_length,
+            "start": eruption_start,
             "location": location,
             "speed": speed,
             "size": size,
@@ -206,7 +206,7 @@ def generate_simulation(mission_id, access_intervals, eruption_length, eruption_
         json.dump(simulation_information_json, simulation_information_file)
 
 
-def generate_simulations(quantity, event_fraction):
+def generate_volcano_simulations(quantity, event_fraction):
     int_path = Path("./int_files")
     simulations_path = int_path / "simulations"
     simulations_path.mkdir(parents=True, exist_ok=True)
@@ -258,6 +258,217 @@ def generate_simulations(quantity, event_fraction):
             access_times = read_access_times(location)
 
         # Create simulation
-        generate_simulation(mission_id, access_times, eruption_length, eruption_start, location, speed, size,
+        generate_volcano_simulation(mission_id, access_times, eruption_length, eruption_start, location, speed, size,
                             max_tir_temperature, max_swir_temperature, max_ash_cloud, max_terrain_displacement,
                             max_so2_levels, simulation_information_path, data_streams_path)
+
+
+def generate_hurricane_simulation(mission_id, hurricane_length, hurricane_start, location, speed, size,
+                                  max_wind_speed, max_sea_temp, max_cloud, simulation_information_path):
+    observable_properties = ["Wind speed over sea surface (horizontal)", "Sea surface temperature", "Cloud imagery"]
+    with simulation_information_path.open('w', encoding='utf8') as simulation_information_file:
+        simulation_information_json = {
+            "mission_id": mission_id,
+            "length": hurricane_length,
+            "start": hurricane_start,
+            "location": location,
+            "speed": speed,
+            "size": size,
+            "max_wind_speed": max_wind_speed,
+            "max_sea_temp": max_sea_temp,
+            "max_cloud": max_cloud,
+            "observable_properties": observable_properties
+        }
+        json.dump(simulation_information_json, simulation_information_file)
+
+
+def generate_hurricane_simulations(quantity, event_fraction):
+    int_path = Path("./int_files")
+    simulations_path = int_path / "simulations"
+    simulations_path.mkdir(parents=True, exist_ok=True)
+    accesses_path = int_path / "accesses"
+
+    eruption_length_range = [12., 120.]  # hours
+    eruption_start_range = [0., 168.]  # hours since beginning of simulation
+    location_range = ["Atlantic1", "Atlantic2", "Atlantic3", "Atlantic4", "Atlantic5",
+                      "Pacific1", "Pacific2", "Pacific3", "Pacific4", "Pacific5"]
+    speed_range = [0.1, 0.5]  # fraction of time until max eruption
+    size_range = [200., 2000.]  # meter radius
+    max_wind_speed_range = [50., 80.]
+    max_sea_temp_range = [5., 15.]
+    max_cloud_range = [0.5, 0.9]
+
+    # For each simulation, sample a value for each parameter, create a simulation, save it under int_files
+    for sim_number in range(quantity):
+        # Create paths
+        simulation_path = simulations_path / f"simulation_{sim_number}"
+        if simulation_path.exists():
+            shutil.rmtree(simulation_path)
+        simulation_path.mkdir(parents=True, exist_ok=True)
+
+        simulation_information_path = simulation_path / "simulation_information.json"
+        data_streams_path = simulation_path / "data_streams"
+
+        # Sample values
+        eruption_length = random.uniform(*eruption_length_range)
+        eruption_start = random.uniform(*eruption_start_range)
+        location = random.choice(location_range)
+        speed = random.uniform(*speed_range)
+        size = random.uniform(*size_range)
+        max_wind_speed = random.uniform(*max_wind_speed_range)
+        max_sea_temp = random.uniform(*max_sea_temp_range)
+        max_cloud = random.uniform(*max_cloud_range)
+        # Create a mission in the KG
+        mission_id = add_volcano_mission(location)
+
+        # Generate accesses if not already there
+        access_path = accesses_path / f"{location}.json"
+        if not access_path.exists():
+            access_times = obtain_access_times(mission_id)
+        else:
+            access_times = read_access_times(location)
+
+        # Create simulation
+        generate_hurricane_simulation(mission_id, eruption_length, eruption_start, location, speed, size,
+                            max_wind_speed, max_sea_temp, max_cloud, simulation_information_path)
+
+
+def generate_flood_simulation(mission_id, hurricane_length, hurricane_start, location, speed, size,
+                                  max_soil_moisture, max_precipitation, max_land, simulation_information_path):
+    observable_properties = ["Soil moisture at the surface", "Precipitation Profile (liquid or solid)", "Land surface imagery"]
+    with simulation_information_path.open('w', encoding='utf8') as simulation_information_file:
+        simulation_information_json = {
+            "mission_id": mission_id,
+            "length": hurricane_length,
+            "start": hurricane_start,
+            "location": location,
+            "speed": speed,
+            "size": size,
+            "max_soil_moisture": max_soil_moisture,
+            "max_precipitation": max_precipitation,
+            "max_land": max_land,
+            "observable_properties": observable_properties
+        }
+        json.dump(simulation_information_json, simulation_information_file)
+
+
+def generate_flood_simulations(quantity, event_fraction):
+    int_path = Path("./int_files")
+    simulations_path = int_path / "simulations"
+    simulations_path.mkdir(parents=True, exist_ok=True)
+    accesses_path = int_path / "accesses"
+
+    eruption_length_range = [12., 120.]  # hours
+    eruption_start_range = [0., 168.]  # hours since beginning of simulation
+    location_range = ["India", "Bangladesh", "Texas", "Italy", "Brazil"]
+    speed_range = [0.1, 0.5]  # fraction of time until max eruption
+    size_range = [200., 2000.]  # meter radius
+    max_soil_moisture_range = [80., 99.]
+    max_precipitation_range = [200., 300.]
+    max_land_range = [0.5, 0.9]
+
+    # For each simulation, sample a value for each parameter, create a simulation, save it under int_files
+    for sim_number in range(quantity):
+        # Create paths
+        simulation_path = simulations_path / f"simulation_{sim_number}"
+        if simulation_path.exists():
+            shutil.rmtree(simulation_path)
+        simulation_path.mkdir(parents=True, exist_ok=True)
+
+        simulation_information_path = simulation_path / "simulation_information.json"
+        data_streams_path = simulation_path / "data_streams"
+
+        # Sample values
+        eruption_length = random.uniform(*eruption_length_range)
+        eruption_start = random.uniform(*eruption_start_range)
+        location = random.choice(location_range)
+        speed = random.uniform(*speed_range)
+        size = random.uniform(*size_range)
+        max_soil_moisture = random.uniform(*max_soil_moisture_range)
+        max_precipitation = random.uniform(*max_precipitation_range)
+        max_land = random.uniform(*max_land_range)
+        # Create a mission in the KG
+        mission_id = add_volcano_mission(location)
+
+        # Generate accesses if not already there
+        access_path = accesses_path / f"{location}.json"
+        if not access_path.exists():
+            access_times = obtain_access_times(mission_id)
+        else:
+            access_times = read_access_times(location)
+
+        # Create simulation
+        generate_flood_simulation(mission_id, eruption_length, eruption_start, location, speed, size,
+                            max_soil_moisture, max_precipitation, max_land, simulation_information_path)
+
+
+def generate_forest_fire_simulation(mission_id, hurricane_length, hurricane_start, location, speed, size,
+                                    max_temp, max_fire_temp, max_cloud, max_gases, simulation_information_path):
+    observable_properties = ["Land surface temperature", "Fire temperature", "Cloud type", "Trace gases (excluding ozone)"]
+    with simulation_information_path.open('w', encoding='utf8') as simulation_information_file:
+        simulation_information_json = {
+            "mission_id": mission_id,
+            "length": hurricane_length,
+            "start": hurricane_start,
+            "location": location,
+            "speed": speed,
+            "size": size,
+            "max_temp": max_temp,
+            "max_fire_temp": max_fire_temp,
+            "max_cloud": max_cloud,
+            "max_gases": max_gases,
+            "observable_properties": observable_properties
+        }
+        json.dump(simulation_information_json, simulation_information_file)
+
+
+def generate_forest_fire_simulations(quantity, event_fraction):
+    int_path = Path("./int_files")
+    simulations_path = int_path / "simulations"
+    simulations_path.mkdir(parents=True, exist_ok=True)
+    accesses_path = int_path / "accesses"
+
+    eruption_length_range = [12., 120.]  # hours
+    eruption_start_range = [0., 168.]  # hours since beginning of simulation
+    location_range = ["Spain", "Greece", "California", "Washington", "Kenya"]
+    speed_range = [0.1, 0.5]  # fraction of time until max eruption
+    size_range = [200., 2000.]  # meter radius
+    max_temp_range = [80., 99.]
+    max_fire_temp_range = [200., 300.]
+    max_cloud_range = [0.5, 0.9]
+    max_gases_range = [100, 200]
+
+    # For each simulation, sample a value for each parameter, create a simulation, save it under int_files
+    for sim_number in range(quantity):
+        # Create paths
+        simulation_path = simulations_path / f"simulation_{sim_number}"
+        if simulation_path.exists():
+            shutil.rmtree(simulation_path)
+        simulation_path.mkdir(parents=True, exist_ok=True)
+
+        simulation_information_path = simulation_path / "simulation_information.json"
+        data_streams_path = simulation_path / "data_streams"
+
+        # Sample values
+        eruption_length = random.uniform(*eruption_length_range)
+        eruption_start = random.uniform(*eruption_start_range)
+        location = random.choice(location_range)
+        speed = random.uniform(*speed_range)
+        size = random.uniform(*size_range)
+        max_temp = random.uniform(*max_temp_range)
+        max_fire_temp = random.uniform(*max_fire_temp_range)
+        max_cloud = random.uniform(*max_cloud_range)
+        max_gases = random.uniform(*max_gases_range)
+        # Create a mission in the KG
+        mission_id = add_volcano_mission(location)
+
+        # Generate accesses if not already there
+        access_path = accesses_path / f"{location}.json"
+        if not access_path.exists():
+            access_times = obtain_access_times(mission_id)
+        else:
+            access_times = read_access_times(location)
+
+        # Create simulation
+        generate_forest_fire_simulation(mission_id, eruption_length, eruption_start, location, speed, size,
+                                        max_temp, max_fire_temp, max_cloud, max_gases, simulation_information_path)

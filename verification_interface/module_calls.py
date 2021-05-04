@@ -123,15 +123,18 @@ def run_verification(original_team, simulation_path: Path, simulation_info, acce
 
     result = []
     teaming = []
+    times = []
     for p in processes:
-        result_p, teaming_p = qout.get()
+        result_p, teaming_p, time_dict = qout.get()
         result.append(result_p)
         teaming.append(teaming_p)
+        times.append(time_dict)
 
     # merge all teaming dictionaries into one
     teams = {k: v for d in teaming for k, v in d.items()}
+    timestep_dict = {k: v for d in times for k, v in d.items()}
 
-    optimal_teaming = pareto_plot_all(result, teams)
+    optimal_teaming = pareto_plot_all(result, teams, timestep_dict)
     print('\n ===================== OPTIMAL TEAM ===================== ')
     #print(result, teams)
     print(optimal_teaming)
